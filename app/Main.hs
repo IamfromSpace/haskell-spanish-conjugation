@@ -121,51 +121,53 @@ data Full_Word
 --   Monoid b => (b, a)
 -- However, only Maybe appears to be an Alternative,
 -- So that needs a custom definition
--- Also, (Maybe a) should probably be an (Either String a)
--- So that the unmatched section can report an error
-newtype Parser i o = Parser { run_parser :: i -> Maybe (o, i) }
+-- It would be nice to parameterize the error type, but 
+-- then it's annoying to make add a separator
+newtype Parser i o = Parser { run_parser :: i -> Either String (o, i) }
 
 instance Functor (Parser i) where
   fmap f p = Parser $ \input ->
     fmap (\(o,i) -> (f o, i)) (run_parser p input)
 
 instance Applicative (Parser i) where
-  pure x = Parser $ \a -> Just (x, a)
+  pure x = Parser $ \a -> Right (x, a)
   pf <*> px = Parser $ \input ->
     case run_parser pf input of
-      Nothing -> Nothing
-      Just (f, rest) -> case run_parser px rest of
-        Nothing -> Nothing
-        Just (x, o) -> Just (f x, o)
+      Left e -> Left e
+      Right (f, rest) -> case run_parser px rest of
+        Left e -> Left e
+        Right (x, o) -> Right (f x, o)
 
-instance Alternative (Parser i) where
-  empty = Parser (const Nothing)
+instance Monoid i => Alternative (Parser i) where
+  empty = Parser (const (Left mempty))
   (<|>) p0 p1 = Parser $ \input ->
     case run_parser p0 input of
-      Nothing -> run_parser p1 input
+      Left e0 -> case run_parser p1 input of
+        Left e1 -> Left (e0 ++ "\n" ++ e1)
+        second_result -> second_result
       first_result -> first_result
 
-satisfy :: (Char -> Bool) -> Parser String Char
-satisfy pred = Parser $ \input ->
+satisfy :: (String, (Char -> Bool)) -> Parser String Char
+satisfy (msg, pred) = Parser $ \input ->
   case input of
-    (c:cs) | pred c -> Just (c, cs)
-    _ -> Nothing
+    (c:cs) | pred c -> Right (c, cs)
+    _ -> Left (msg ++ " at: '" ++ input ++ "'.")
 
 look_ahead :: (Char -> Bool) -> Parser String ()
 look_ahead pred = Parser $ \input ->
   case input of
-    (c:cs) | pred c -> Just ((), input)
-    _ -> Nothing
+    (c:cs) | pred c -> Right ((), input)
+    _ -> Left ("look_ahead failed at: '" ++ input ++ "'.")
 
 terminal :: Parser String ()
 terminal = Parser $ \input ->
   if input == "" then
-    Just ((), input)
+    Right ((), input)
   else
-    Nothing
+    Left ("String did not terminate.  Remainder: '" ++ input ++ "'. ")
 
 char :: Char -> Parser String Char
-char = satisfy . (==)
+char c = satisfy ("Char did not match '" ++ [c] ++ "'", (==) c)
 
 ($>) :: Functor f => f a -> b -> f b
 ($>) = flip (fmap . const)
@@ -345,14 +347,6 @@ syllable =
     <|> liftA2 Onset_And_Core onset core
     <|> liftA2 Core_And_Coda core coda
     <|> fmap Core_Only core
-
-{-
-data Inner_Syllable
-  = Inner_Core_Only Core
-  | Inner_Onset_And_Core Onset Core
-  | Inner_Coda_Onset_And_Core Coda Onset Core
-  deriving (Show)
--}
 
 inner_syllable :: Parser String Inner_Syllable
 inner_syllable =
