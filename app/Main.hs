@@ -110,9 +110,7 @@ data Inner_Syllable
   | Inner_Coda_Onset_And_Core Coda Onset Core
   deriving (Show)
 
-data Full_Word
-  = Full_Word Syllable [Inner_Syllable]
-  deriving (Show)
+type Full_Word = (Maybe Onset, Core, [Inner_Syllable], Maybe Coda)
 
 -- If we swap o/i in the tuple and constrain Monoid i => i
 -- then this is just the composition (h (g (f a))) of three Applicatives
@@ -361,11 +359,7 @@ liftA4 f a0 a1 a2 a3 = f <$> a0 <*> a1 <*> a2 <*> a3
 
 word :: Parser String Full_Word
 word =
-  -- This is really ugly...
-   liftA4 (\a b c d -> Full_Word (Onset_Core_And_Coda a b d) c) onset core (many inner_syllable) coda
-    <|> liftA3 (\a b c -> Full_Word (Onset_And_Core a b) c) onset core (many inner_syllable)
-    <|> liftA3 (\a b c -> Full_Word (Core_And_Coda a c) b) core (many inner_syllable) coda
-    <|> liftA2 (\a b -> Full_Word (Core_Only a) b) core (many inner_syllable)
+   liftA4 (,,,) (optional onset) core (many inner_syllable) (optional coda)
 
 word_only :: Parser String Full_Word
 word_only = word <* terminal
