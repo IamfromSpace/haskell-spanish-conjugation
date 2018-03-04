@@ -21,17 +21,12 @@ accent (_, a) = (True, a)
 unaccent :: Accentable a -> Accentable a
 unaccent (_, a) = (False, a)
 
-data High_Or_Low
-  = High High_Vowel
-  | Low Low_Vowel
-  deriving (Show)
-
-data Core
-  = Vowel_Only (Accentable High_Or_Low)
-  | Rising_Diphthong High_Vowel (Accentable High_Or_Low)
-  | Falling_Diphthong (Accentable Low_Vowel) High_Vowel 
-  | Tripththong High_Vowel (Accentable Low_Vowel) High_Vowel 
-  deriving (Show)
+type Core =
+  ( Maybe High_Vowel
+  , Either
+    (Accentable High_Vowel)
+    ((Accentable Low_Vowel), Maybe High_Vowel)
+  )
 
 data Liquid
   = R
@@ -210,30 +205,30 @@ low_vowel = a <|> e <|> o
 high_vowel :: Parser String High_Vowel
 high_vowel = i <|> u
 
-high_or_low :: Parser String High_Or_Low
-high_or_low = fmap Low low_vowel <|> fmap High high_vowel
-
-accentable_high_or_low :: Parser String (Accentable High_Or_Low)
-accentable_high_or_low =
-  fmap (\(a,b) -> (a, Low b)) (aa <|> ae <|> ao)
-    <|> fmap (\(a,b) -> (a, High b)) (ai <|> au)
+accentable_high_vowel :: Parser String (Accentable High_Vowel)
+accentable_high_vowel =
+  fmap ((,) False) high_vowel <|> ai <|> au
 
 accentable_low_vowel :: Parser String (Accentable Low_Vowel)
 accentable_low_vowel =
   fmap ((,) False) low_vowel <|> aa <|> ae <|> ao
 
-vowel :: Parser String (Accentable High_Or_Low)
-vowel = fmap ((,) False) high_or_low <|> accentable_high_or_low
-
 core :: Parser String Core
 core =
-  -- Order here is critical
-  -- We can't jump to a more 'lax' alternative until we're sure
-  -- that it wouldn't meet the more strict case.
-  liftA3 Tripththong high_vowel accentable_low_vowel high_vowel
-    <|> liftA2 Rising_Diphthong high_vowel vowel
-    <|> liftA2 Falling_Diphthong accentable_low_vowel high_vowel
-    <|> fmap Vowel_Only vowel
+  let
+    ohv = optional high_vowel
+
+    either a b = fmap Left a <|> fmap Right b
+
+    low_and_maybe_high = liftA2 (,) accentable_low_vowel ohv
+
+  in
+    -- We can almost get this with a single "rule"
+    -- however, if an 'i/u' was scooped up by the ohv, and it was
+    -- the main vowel, we'll fail the parse without the second
+    -- rule that looks for that specific case.
+    liftA2 (,) ohv (either accentable_high_vowel low_and_maybe_high)
+      <|> fmap ((,) Nothing . Left) accentable_high_vowel
 
 not_e_or_i :: Char -> Bool
 not_e_or_i c = c /= 'e' && c /= 'é' && c /= 'i' && c /= 'í'
