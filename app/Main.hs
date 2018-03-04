@@ -99,11 +99,7 @@ data Syllable
   | Onset_Core_And_Coda Onset Core Coda
   deriving (Show)
 
-data Inner_Syllable
-  = Inner_Core_Only Core
-  | Inner_Onset_And_Core Onset Core
-  | Inner_Coda_Onset_And_Core Coda Onset Core
-  deriving (Show)
+type Inner_Syllable = (Maybe (Maybe Coda, Onset), Core)
 
 type Full_Word = (Maybe Onset, Core, [Inner_Syllable], Maybe Coda)
 
@@ -343,11 +339,21 @@ syllable =
 
 inner_syllable :: Parser String Inner_Syllable
 inner_syllable =
-  -- Order here is important, but backwards from usual.
-  -- We want to make sure we prefer an onset to a coda.
-  fmap Inner_Core_Only core
-   <|> liftA2 Inner_Onset_And_Core onset core
-   <|> liftA3 Inner_Coda_Onset_And_Core coda onset core
+  -- precedence rules here get a little strange
+  -- we need to make sure that we first match _just_ an onset
+  -- and only try to match a coda + onset if we have to
+  let
+    optional_p_then_core :: Parser String b -> Parser String (Maybe b, Core)
+    optional_p_then_core = flip (liftA2 (,)) core . optional
+
+    onset_no_coda :: Parser String (Maybe a, Onset)
+    onset_no_coda = fmap ((,) Nothing) onset
+
+    onset_and_coda :: Parser String (Maybe Coda, Onset)
+    onset_and_coda = liftA2 (,) (fmap Just coda) onset
+  in
+    optional_p_then_core onset_no_coda
+      <|> optional_p_then_core onset_and_coda
 
 liftA4 :: Applicative a => (b -> c -> d -> e -> f) -> a b -> a c -> a d -> a e -> a f
 liftA4 f a0 a1 a2 a3 = f <$> a0 <*> a1 <*> a2 <*> a3
