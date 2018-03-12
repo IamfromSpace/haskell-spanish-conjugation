@@ -114,6 +114,8 @@ type Stem = (Maybe Onset, [(Core, InnerCluster)])
 
 type Ending = (Core, [InnerSyllable], Maybe Coda)
 
+-- This should consider a special parser, rather than hard dropping
+-- from a full word.
 toEnding :: FullWord -> Ending
 toEnding (_, core, innerSyllables, coda) = (core, innerSyllables, coda)
 
