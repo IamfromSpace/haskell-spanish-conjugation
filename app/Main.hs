@@ -131,6 +131,9 @@ toStem (onset, core, innerSyllables, _) =
     let (mhv, l) = dropLastCore core innerSyllables
     in (mhv, (onset, l))
 
+-- This is all pretty ugly and shows that these types are hardly
+-- "transparent" to the user.  All these actions should be performed
+-- through helper methods rather than destructuring and restructuring.
 toIntermediate :: FullWord -> FullWord -> (Stem, Ending)
 toIntermediate infinitive ending =
     let (mhv1, (mo, coreClusters_0)) = toStem infinitive
