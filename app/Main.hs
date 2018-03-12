@@ -5,7 +5,7 @@ import Control.Applicative
 data High_Vowel
   = U
   | I
-  deriving (Show)
+  deriving (Show, Eq)
 
 data Low_Vowel
   = A
@@ -99,9 +99,49 @@ data Syllable
   | Onset_Core_And_Coda Onset Core Coda
   deriving (Show)
 
-type Inner_Syllable = (Maybe (Maybe Coda, Onset), Core)
+type Inner_Cluster = Maybe (Maybe Coda, Onset)
+
+type Inner_Syllable = (Inner_Cluster, Core)
 
 type Full_Word = (Maybe Onset, Core, [Inner_Syllable], Maybe Coda)
+
+type Stem = (Maybe Onset, [(Core, Inner_Cluster)])
+type Ending = (Core, [Inner_Syllable], Maybe Coda)
+
+to_ending :: Full_Word -> Ending
+to_ending (_, core, inner_syllables, coda) = (core, inner_syllables, coda)
+
+drop_last_core :: Core -> [Inner_Syllable] -> (Maybe High_Vowel ,[(Core, Inner_Cluster)])
+drop_last_core =
+  let
+    go built a [] = (fst a, built)
+    go built a ((cluster, b) : t) = go ((a, cluster) : built) b t
+  in
+    go []
+
+to_stem :: Full_Word -> (Maybe High_Vowel, Stem)
+to_stem (onset, core, inner_syllables, _) =
+  let
+    (mhv, l) = drop_last_core core inner_syllables
+  in
+    (mhv, (onset, l))
+
+to_intermediate :: Full_Word -> Full_Word -> (Stem, Ending)
+to_intermediate infinitive ending =
+  let
+    (mhv1, (mo, core_clusters_0)) = to_stem infinitive
+    ((mhv2, e), iss, coda) = to_ending ending
+    (mhv, core_clusters_1) =
+      if mhv1 /= Nothing && mhv2 /= Nothing then
+        -- This ugliness means that if the final syllable of the stem and
+        -- the first syllable of the ending have a colliding dipthong (which
+        -- must be a u/i) we add another syllable, where the u gets upgraded
+        -- to the vowel, and the i becomes a y in the onset.
+        (Nothing, ((Nothing, Left (False, U)), Just (Nothing, Single (Regular Y))) : core_clusters_0)
+      else
+        (mhv1 <|> mhv2, core_clusters_0)
+  in
+    ((mo, core_clusters_1), ((mhv, e), iss, coda))
 
 -- If we swap o/i in the tuple and constrain Monoid i => i
 -- then this is just the composition (h (g (f a))) of three Applicatives
