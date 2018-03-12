@@ -1,13 +1,15 @@
 module Main where
 
 import Control.Applicative
+import qualified Control.Arrow as Arrow
+import qualified Data.Maybe as Maybe
 
-data High_Vowel
+data HighVowel
     = U
     | I
     deriving (Show, Eq)
 
-data Low_Vowel
+data LowVowel
     = A
     | E
     | O
@@ -22,34 +24,33 @@ unaccent :: Accentable a -> Accentable a
 unaccent (_, a) = (False, a)
 
 type Core
-     = ( Maybe High_Vowel
-       , Either (Accentable High_Vowel) ( (Accentable Low_Vowel)
-                                        , Maybe High_Vowel))
+     = ( Maybe HighVowel
+       , Either (Accentable HighVowel) (Accentable LowVowel, Maybe HighVowel))
 
 data Liquid
     = R
     | L
     deriving (Show)
 
-data Stop_Or_F
+data StopOrF
     = B
     | D
     | F
-    | G G_Creator
-    | K K_Creator
+    | G GCreator
+    | K KCreator
     | P
     | T
     deriving (Show)
 
-data G_Creator
-    = G_From_G
-    | G_From_GU
+data GCreator
+    = GFromG
+    | GFromGU
     deriving (Show)
 
-data K_Creator
-    = K_From_QU
-    | K_From_C
-    | K_From_K
+data KCreator
+    = KFromQU
+    | KFromC
+    | KFromK
     deriving (Show)
 
 data Regular
@@ -58,32 +59,32 @@ data Regular
     | N
     | Ñ
     | Y
-    | S S_Creator
+    | S SCreator
     | V
-    | X X_Creator
+    | X XCreator
     deriving (Show)
 
-data S_Creator
-    = S_From_Z
-    | S_From_C
-    | S_From_S
-    | S_From_X
+data SCreator
+    = SFromZ
+    | SFromC
+    | SFromS
+    | SFromX
     deriving (Show)
 
-data X_Creator
-    = X_From_J
-    | X_From_G
+data XCreator
+    = XFromJ
+    | XFromG
     deriving (Show)
 
 data Consonant
     = Liquid Liquid
-    | Stop_Or_F Stop_Or_F
+    | StopOrF StopOrF
     | Regular Regular
     deriving (Show)
 
 data Onset
     = Single Consonant
-    | Double Stop_Or_F
+    | Double StopOrF
              Liquid
     deriving (Show)
 
@@ -93,47 +94,47 @@ data Coda =
     deriving (Show)
 
 data Syllable
-    = Core_Only Core
-    | Onset_And_Core Onset
-                     Core
-    | Core_And_Coda Core
-                    Coda
-    | Onset_Core_And_Coda Onset
-                          Core
-                          Coda
+    = CoreOnly Core
+    | OnsetAndCore Onset
+                   Core
+    | CoreAndCoda Core
+                  Coda
+    | OnsetCoreAndCoda Onset
+                       Core
+                       Coda
     deriving (Show)
 
-type Inner_Cluster = Maybe (Maybe Coda, Onset)
+type InnerCluster = Maybe (Maybe Coda, Onset)
 
-type Inner_Syllable = (Inner_Cluster, Core)
+type InnerSyllable = (InnerCluster, Core)
 
-type Full_Word = (Maybe Onset, Core, [Inner_Syllable], Maybe Coda)
+type FullWord = (Maybe Onset, Core, [InnerSyllable], Maybe Coda)
 
-type Stem = (Maybe Onset, [(Core, Inner_Cluster)])
+type Stem = (Maybe Onset, [(Core, InnerCluster)])
 
-type Ending = (Core, [Inner_Syllable], Maybe Coda)
+type Ending = (Core, [InnerSyllable], Maybe Coda)
 
-to_ending :: Full_Word -> Ending
-to_ending (_, core, inner_syllables, coda) = (core, inner_syllables, coda)
+toEnding :: FullWord -> Ending
+toEnding (_, core, innerSyllables, coda) = (core, innerSyllables, coda)
 
-drop_last_core ::
-       Core -> [Inner_Syllable] -> (Maybe High_Vowel, [(Core, Inner_Cluster)])
-drop_last_core =
+dropLastCore ::
+       Core -> [InnerSyllable] -> (Maybe HighVowel, [(Core, InnerCluster)])
+dropLastCore =
     let go built a [] = (fst a, built)
         go built a ((cluster, b):t) = go ((a, cluster) : built) b t
     in go []
 
-to_stem :: Full_Word -> (Maybe High_Vowel, Stem)
-to_stem (onset, core, inner_syllables, _) =
-    let (mhv, l) = drop_last_core core inner_syllables
+toStem :: FullWord -> (Maybe HighVowel, Stem)
+toStem (onset, core, innerSyllables, _) =
+    let (mhv, l) = dropLastCore core innerSyllables
     in (mhv, (onset, l))
 
-to_intermediate :: Full_Word -> Full_Word -> (Stem, Ending)
-to_intermediate infinitive ending =
-    let (mhv1, (mo, core_clusters_0)) = to_stem infinitive
-        ((mhv2, e), iss, coda) = to_ending ending
-        (mhv, core_clusters_1) =
-            if mhv1 /= Nothing && mhv2 /= Nothing
+toIntermediate :: FullWord -> FullWord -> (Stem, Ending)
+toIntermediate infinitive ending =
+    let (mhv1, (mo, coreClusters_0)) = toStem infinitive
+        ((mhv2, e), iss, coda) = toEnding ending
+        (mhv, coreClusters1) =
+            if Maybe.isJust mhv1 && Maybe.isJust mhv2
         -- This ugliness means that if the final syllable of the stem and
         -- the first syllable of the ending have a colliding dipthong (which
         -- must be a u/i) we add another syllable, where the u gets upgraded
@@ -141,9 +142,9 @@ to_intermediate infinitive ending =
                 then ( Nothing
                      , ( (Nothing, Left (False, U))
                        , Just (Nothing, Single (Regular Y))) :
-                       core_clusters_0)
-                else (mhv1 <|> mhv2, core_clusters_0)
-    in ((mo, core_clusters_1), ((mhv, e), iss, coda))
+                       coreClusters_0)
+                else (mhv1 <|> mhv2, coreClusters_0)
+    in ((mo, coreClusters1), ((mhv, e), iss, coda))
 
 -- If we swap o/i in the tuple and constrain Monoid i => i
 -- then this is just the composition (h (g (f a))) of three Applicatives
@@ -155,21 +156,20 @@ to_intermediate infinitive ending =
 -- It would be nice to parameterize the error type, but 
 -- then it's annoying to make add a separator
 newtype Parser i o = Parser
-    { run_parser :: i -> Either String (o, i)
+    { runParser :: i -> Either String (o, i)
     }
 
 instance Functor (Parser i) where
-    fmap f p =
-        Parser $ \input -> fmap (\(o, i) -> (f o, i)) (run_parser p input)
+    fmap f p = Parser $ \input -> fmap (Arrow.first f) (runParser p input)
 
 instance Applicative (Parser i) where
     pure x = Parser $ \a -> Right (x, a)
     pf <*> px =
         Parser $ \input ->
-            case run_parser pf input of
+            case runParser pf input of
                 Left e -> Left e
                 Right (f, rest) ->
-                    case run_parser px rest of
+                    case runParser px rest of
                         Left e -> Left e
                         Right (x, o) -> Right (f x, o)
 
@@ -177,14 +177,14 @@ instance Monoid i => Alternative (Parser i) where
     empty = Parser (const (Left mempty))
     (<|>) p0 p1 =
         Parser $ \input ->
-            case run_parser p0 input of
+            case runParser p0 input of
                 Left e0 ->
-                    case run_parser p1 input of
+                    case runParser p1 input of
                         Left e1 -> Left (e0 ++ "\n" ++ e1)
-                        second_result -> second_result
-                first_result -> first_result
+                        secondResult -> secondResult
+                firstResult -> firstResult
 
-satisfy :: (String, (Char -> Bool)) -> Parser String Char
+satisfy :: (String, Char -> Bool) -> Parser String Char
 satisfy (msg, pred) =
     Parser $ \input ->
         case input of
@@ -192,13 +192,13 @@ satisfy (msg, pred) =
                 | pred c -> Right (c, cs)
             _ -> Left (msg ++ " at: '" ++ input ++ "'.")
 
-look_ahead :: (Char -> Bool) -> Parser String ()
-look_ahead pred =
+lookAhead :: (Char -> Bool) -> Parser String ()
+lookAhead pred =
     Parser $ \input ->
         case input of
             (c:cs)
                 | pred c -> Right ((), input)
-            _ -> Left ("look_ahead failed at: '" ++ input ++ "'.")
+            _ -> Left ("lookAhead failed at: '" ++ input ++ "'.")
 
 terminal :: Parser String ()
 terminal =
@@ -215,130 +215,130 @@ char c = satisfy ("Char did not match '" ++ [c] ++ "'", (==) c)
 ($>) :: Functor f => f a -> b -> f b
 ($>) = flip (fmap . const)
 
-a :: Parser String Low_Vowel
+a :: Parser String LowVowel
 a = char 'a' $> A
 
-aa :: Parser String (Accentable Low_Vowel)
+aa :: Parser String (Accentable LowVowel)
 aa = char 'á' $> (True, A)
 
-e :: Parser String Low_Vowel
+e :: Parser String LowVowel
 e = char 'e' $> E
 
-ae :: Parser String (Accentable Low_Vowel)
+ae :: Parser String (Accentable LowVowel)
 ae = char 'é' $> (True, E)
 
-o :: Parser String Low_Vowel
+o :: Parser String LowVowel
 o = char 'o' $> O
 
-ao :: Parser String (Accentable Low_Vowel)
+ao :: Parser String (Accentable LowVowel)
 ao = char 'ó' $> (True, O)
 
-i :: Parser String High_Vowel
+i :: Parser String HighVowel
 i = char 'i' $> I
 
-ai :: Parser String (Accentable High_Vowel)
+ai :: Parser String (Accentable HighVowel)
 ai = char 'í' $> (True, I)
 
-u :: Parser String High_Vowel
+u :: Parser String HighVowel
 u
   -- An ü should never be the main vowel...
   -- But this is later used and can be upgraded
   -- In practice, this likely can't happen
  = (char 'u' <|> char 'ü') $> U
 
-au :: Parser String (Accentable High_Vowel)
+au :: Parser String (Accentable HighVowel)
 au = char 'ú' $> (True, U)
 
-low_vowel :: Parser String Low_Vowel
-low_vowel = a <|> e <|> o
+lowVowel :: Parser String LowVowel
+lowVowel = a <|> e <|> o
 
-high_vowel :: Parser String High_Vowel
-high_vowel = i <|> u
+highVowel :: Parser String HighVowel
+highVowel = i <|> u
 
-accentable_high_vowel :: Parser String (Accentable High_Vowel)
-accentable_high_vowel = fmap ((,) False) high_vowel <|> ai <|> au
+accentableHighVowel :: Parser String (Accentable HighVowel)
+accentableHighVowel = fmap ((,) False) highVowel <|> ai <|> au
 
-accentable_low_vowel :: Parser String (Accentable Low_Vowel)
-accentable_low_vowel = fmap ((,) False) low_vowel <|> aa <|> ae <|> ao
+accentableLowVowel :: Parser String (Accentable LowVowel)
+accentableLowVowel = fmap ((,) False) lowVowel <|> aa <|> ae <|> ao
 
 core :: Parser String Core
 core =
-    let ohv = optional high_vowel
+    let ohv = optional highVowel
         either a b = fmap Left a <|> fmap Right b
-        low_and_maybe_high = liftA2 (,) accentable_low_vowel ohv
+        lowAndMaybeHigh = liftA2 (,) accentableLowVowel ohv
     -- We can almost get this with a single "rule"
     -- however, if an 'i/u' was scooped up by the ohv, and it was
     -- the main vowel, we'll fail the parse without the second
     -- rule that looks for that specific case.
-    in liftA2 (,) ohv (either accentable_high_vowel low_and_maybe_high) <|>
-       fmap ((,) Nothing . Left) accentable_high_vowel
+    in liftA2 (,) ohv (either accentableHighVowel lowAndMaybeHigh) <|>
+       fmap ((,) Nothing . Left) accentableHighVowel
 
-not_e_or_i :: Char -> Bool
-not_e_or_i c = c /= 'e' && c /= 'é' && c /= 'i' && c /= 'í'
+notEOrI :: Char -> Bool
+notEOrI c = c /= 'e' && c /= 'é' && c /= 'i' && c /= 'í'
 
-e_or_i :: Char -> Bool
-e_or_i = not . not_e_or_i
+eOrI :: Char -> Bool
+eOrI = not . notEOrI
 
 liquid :: Parser String Liquid
 liquid = (char 'r' $> R) <|> (char 'l' $> L)
 
-g_from_g :: Parser String G_Creator
-g_from_g = (char 'g' <* (look_ahead not_e_or_i <|> terminal)) $> G_From_G
+gFromG :: Parser String GCreator
+gFromG = (char 'g' <* (lookAhead notEOrI <|> terminal)) $> GFromG
 
-g_from_gu :: Parser String G_Creator
-g_from_gu = (char 'g' <* char 'u' <* look_ahead e_or_i) $> G_From_GU
+gFromGu :: Parser String GCreator
+gFromGu = (char 'g' <* char 'u' <* lookAhead eOrI) $> GFromGU
 
-g :: Parser String Stop_Or_F
+g :: Parser String StopOrF
 g
   -- Order is critical here
- = fmap (G) (g_from_gu <|> g_from_g)
+ = fmap G (gFromGu <|> gFromG)
 
-k_from_qu :: Parser String K_Creator
-k_from_qu = (char 'q' <* char 'u' <* look_ahead e_or_i) $> K_From_QU
+kFromQu :: Parser String KCreator
+kFromQu = (char 'q' <* char 'u' <* lookAhead eOrI) $> KFromQU
 
-k_from_c :: Parser String K_Creator
-k_from_c
+kFromC :: Parser String KCreator
+kFromC
   -- Pretty much just loan words that allow terminal 'c'
   -- But included for consistency with allowking a terminal 'k'
  =
-    (char 'c' <* ((look_ahead not_e_or_i *> look_ahead (/= 'h')) <|> terminal)) $>
-    K_From_C
+    (char 'c' <* ((lookAhead notEOrI *> lookAhead (/= 'h')) <|> terminal)) $>
+    KFromC
 
-k_from_k :: Parser String K_Creator
-k_from_k = char 'k' $> K_From_K
+kFromK :: Parser String KCreator
+kFromK = char 'k' $> KFromK
 
-k :: Parser String Stop_Or_F
-k = fmap (K) (k_from_qu <|> k_from_c <|> k_from_k)
+k :: Parser String StopOrF
+k = fmap K (kFromQu <|> kFromC <|> kFromK)
 
-stop_or_f :: Parser String Stop_Or_F
-stop_or_f =
+stopOrF :: Parser String StopOrF
+stopOrF =
     char 'b' $> B <|> char 'd' $> D <|> char 'f' $> F <|> g <|> k <|>
     char 'p' $> P <|>
     char 't' $> T
 
-s_from_z :: Parser String S_Creator
-s_from_z = char 'z' $> S_From_Z
+sFromZ :: Parser String SCreator
+sFromZ = char 'z' $> SFromZ
 
-s_from_c :: Parser String S_Creator
-s_from_c = (char 'c' <* look_ahead e_or_i) $> S_From_C
+sFromC :: Parser String SCreator
+sFromC = (char 'c' <* lookAhead eOrI) $> SFromC
 
-s_from_s :: Parser String S_Creator
-s_from_s = char 's' $> S_From_S
+sFromS :: Parser String SCreator
+sFromS = char 's' $> SFromS
 
-s_from_x :: Parser String S_Creator
-s_from_x = char 'x' $> S_From_X
+sFromX :: Parser String SCreator
+sFromX = char 'x' $> SFromX
 
 s :: Parser String Regular
-s = fmap (S) (s_from_z <|> s_from_c <|> s_from_s <|> s_from_x)
+s = fmap S (sFromZ <|> sFromC <|> sFromS <|> sFromX)
 
-x_from_j :: Parser String X_Creator
-x_from_j = char 'j' $> X_From_J
+xFromJ :: Parser String XCreator
+xFromJ = char 'j' $> XFromJ
 
-x_from_g :: Parser String X_Creator
-x_from_g = (char 'g' <* look_ahead e_or_i) $> X_From_G
+xFromG :: Parser String XCreator
+xFromG = (char 'g' <* lookAhead eOrI) $> XFromG
 
 x :: Parser String Regular
-x = fmap (X) (x_from_j <|> x_from_g)
+x = fmap X (xFromJ <|> xFromG)
 
 ch :: Parser String Regular
 ch = char 'c' *> char 'h' $> CH
@@ -353,41 +353,38 @@ regular =
 consonant :: Parser String Consonant
 consonant
   -- Order might matter here, but I don't think so
- = fmap Liquid liquid <|> fmap Stop_Or_F stop_or_f <|> fmap Regular regular
+ = fmap Liquid liquid <|> fmap StopOrF stopOrF <|> fmap Regular regular
 
 onset :: Parser String Onset
 onset
   -- Order matters here
- = liftA2 Double stop_or_f liquid <|> fmap Single consonant
+ = liftA2 Double stopOrF liquid <|> fmap Single consonant
 
 coda :: Parser String Coda
-coda =
-    fmap (Coda True) (consonant <* char 's') <|> fmap (Coda False) (consonant)
+coda = fmap (Coda True) (consonant <* char 's') <|> fmap (Coda False) consonant
 
 syllable
   -- Order is critical here
-  -- Not 100% sure that Onset_And_Core and Core_And_Coda are in
+  -- Not 100% sure that OnsetAndCore and CoreAndCoda are in
   -- the correct order, we would prefer to create an onset though...
  =
-    liftA3 Onset_Core_And_Coda onset core coda <|>
-    liftA2 Onset_And_Core onset core <|>
-    liftA2 Core_And_Coda core coda <|>
-    fmap Core_Only core
+    liftA3 OnsetCoreAndCoda onset core coda <|> liftA2 OnsetAndCore onset core <|>
+    liftA2 CoreAndCoda core coda <|>
+    fmap CoreOnly core
 
-inner_syllable :: Parser String Inner_Syllable
-inner_syllable
+innerSyllable :: Parser String InnerSyllable
+innerSyllable
   -- precedence rules here get a little strange
   -- we need to make sure that we first match _just_ an onset
   -- and only try to match a coda + onset if we have to
  =
-    let optional_p_then_core :: Parser String b -> Parser String (Maybe b, Core)
-        optional_p_then_core = flip (liftA2 (,)) core . optional
-        onset_no_coda :: Parser String (Maybe a, Onset)
-        onset_no_coda = fmap ((,) Nothing) onset
-        onset_and_coda :: Parser String (Maybe Coda, Onset)
-        onset_and_coda = liftA2 (,) (fmap Just coda) onset
-    in optional_p_then_core onset_no_coda <|>
-       optional_p_then_core onset_and_coda
+    let optionalPThenCore :: Parser String b -> Parser String (Maybe b, Core)
+        optionalPThenCore = flip (liftA2 (,)) core . optional
+        onsetNoCoda :: Parser String (Maybe a, Onset)
+        onsetNoCoda = fmap ((,) Nothing) onset
+        onsetAndCoda :: Parser String (Maybe Coda, Onset)
+        onsetAndCoda = liftA2 (,) (fmap Just coda) onset
+    in optionalPThenCore onsetNoCoda <|> optionalPThenCore onsetAndCoda
 
 liftA4 ::
        Applicative a
@@ -399,11 +396,11 @@ liftA4 ::
     -> a f
 liftA4 f a0 a1 a2 a3 = f <$> a0 <*> a1 <*> a2 <*> a3
 
-word :: Parser String Full_Word
-word = liftA4 (,,,) (optional onset) core (many inner_syllable) (optional coda)
+word :: Parser String FullWord
+word = liftA4 (,,,) (optional onset) core (many innerSyllable) (optional coda)
 
-word_only :: Parser String Full_Word
-word_only = word <* terminal
+wordOnly :: Parser String FullWord
+wordOnly = word <* terminal
 
 main :: IO String
-main = pure (show (run_parser word_only "esternocleidooccipitomastoideos"))
+main = pure (show (runParser wordOnly "esternocleidooccipitomastoideos"))
