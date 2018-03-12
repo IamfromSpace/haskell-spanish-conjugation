@@ -114,6 +114,8 @@ type Stem = (Maybe Onset, [(Core, InnerCluster)])
 
 type Ending = (Core, [InnerSyllable], Maybe Coda)
 
+type Intermediate = (Stem, Ending)
+
 -- This should consider a special parser, rather than hard dropping
 -- from a full word.
 toEnding :: FullWord -> Ending
@@ -134,7 +136,7 @@ toStem (onset, core, innerSyllables, _) =
 -- This is all pretty ugly and shows that these types are hardly
 -- "transparent" to the user.  All these actions should be performed
 -- through helper methods rather than destructuring and restructuring.
-toIntermediate :: FullWord -> FullWord -> (Stem, Ending)
+toIntermediate :: FullWord -> FullWord -> Intermediate
 toIntermediate infinitive ending =
     let (mhv1, (mo, coreClusters_0)) = toStem infinitive
         ((mhv2, e), iss, coda) = toEnding ending
@@ -150,6 +152,18 @@ toIntermediate infinitive ending =
                        coreClusters_0)
                 else (mhv1 <|> mhv2, coreClusters_0)
     in ((mo, coreClusters1), ((mhv, e), iss, coda))
+
+joinStemList :: Core -> [(Core, InnerCluster)] -> (Core, [InnerSyllable])
+joinStemList =
+    let go built core [] = (core, built)
+        go built core0 ((core1, cluster):tail) =
+            go ((cluster, core0) : built) core1 tail
+    in go []
+
+fromIntermediate :: Intermediate -> FullWord
+fromIntermediate ((mo, stemList), (core, endingList, coda)) =
+    let (c, slist) = joinStemList core stemList
+    in (mo, c, slist ++ endingList, coda)
 
 -- If we swap o/i in the tuple and constrain Monoid i => i
 -- then this is just the composition (h (g (f a))) of three Applicatives
