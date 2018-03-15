@@ -116,11 +116,6 @@ type Ending = (Core, [InnerSyllable], Maybe Coda)
 
 type Intermediate = (Stem, Ending)
 
--- This should consider a special parser, rather than hard dropping
--- from a full word.
-toEnding :: FullWord -> Ending
-toEnding (_, core, innerSyllables, coda) = (core, innerSyllables, coda)
-
 dropLastCore ::
        Core -> [InnerSyllable] -> (Maybe HighVowel, [(Core, InnerCluster)])
 dropLastCore =
@@ -136,10 +131,10 @@ toStem (onset, core, innerSyllables, _) =
 -- This is all pretty ugly and shows that these types are hardly
 -- "transparent" to the user.  All these actions should be performed
 -- through helper methods rather than destructuring and restructuring.
-toIntermediate :: FullWord -> FullWord -> Intermediate
+toIntermediate :: FullWord -> Ending -> Intermediate
 toIntermediate infinitive ending =
     let (mhv1, (mo, coreClusters_0)) = toStem infinitive
-        ((mhv2, e), iss, coda) = toEnding ending
+        ((mhv2, e), iss, coda) = ending
         (mhv, coreClusters1) =
             if Maybe.isJust mhv1 && Maybe.isJust mhv2
         -- This ugliness means that if the final syllable of the stem and
@@ -418,8 +413,14 @@ liftA4 f a0 a1 a2 a3 = f <$> a0 <*> a1 <*> a2 <*> a3
 word :: Parser String FullWord
 word = liftA4 (,,,) (optional onset) core (many innerSyllable) (optional coda)
 
+ending :: Parser String Ending
+ending = liftA3 (,,) core (many innerSyllable) (optional coda)
+
 wordOnly :: Parser String FullWord
 wordOnly = word <* terminal
+
+endingOnly :: Parser String Ending
+endingOnly = ending <* terminal
 
 main :: IO String
 main = pure (show (runParser wordOnly "esternocleidooccipitomastoideos"))
