@@ -10,11 +10,8 @@ import Linguistics.Types
 class ExplicitlyStressable a where
     hasExplicitStress :: a -> Bool
 
-instance ExplicitlyStressable (Bool, a) where
-    hasExplicitStress = fst
-
 instance ExplicitlyStressable Core where
-    hasExplicitStress (_, v) = hasExplicitStress v
+    hasExplicitStress (b, _, _) = b
 
 instance ExplicitlyStressable Ending where
     hasExplicitStress (joint, endingSyllables, _) =

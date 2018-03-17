@@ -55,25 +55,25 @@ import Utils (($>), liftA4)
 a :: Parser String LowVowel
 a = char 'a' $> A
 
-aa :: Parser String (Accentable LowVowel)
+aa :: Parser String (Bool, LowVowel)
 aa = char 'á' $> (True, A)
 
 e :: Parser String LowVowel
 e = char 'e' $> E
 
-ae :: Parser String (Accentable LowVowel)
+ae :: Parser String (Bool, LowVowel)
 ae = char 'é' $> (True, E)
 
 o :: Parser String LowVowel
 o = char 'o' $> O
 
-ao :: Parser String (Accentable LowVowel)
+ao :: Parser String (Bool, LowVowel)
 ao = char 'ó' $> (True, O)
 
 i :: Parser String HighVowel
 i = char 'i' $> I
 
-ai :: Parser String (Accentable HighVowel)
+ai :: Parser String (Bool, HighVowel)
 ai = char 'í' $> (True, I)
 
 u :: Parser String HighVowel
@@ -83,7 +83,7 @@ u
   -- In practice, this likely can't happen
  = (char 'u' <|> char 'ü') $> U
 
-au :: Parser String (Accentable HighVowel)
+au :: Parser String (Bool, HighVowel)
 au = char 'ú' $> (True, U)
 
 lowVowel :: Parser String LowVowel
@@ -92,10 +92,10 @@ lowVowel = a <|> e <|> o
 highVowel :: Parser String HighVowel
 highVowel = i <|> u
 
-accentableHighVowel :: Parser String (Accentable HighVowel)
+accentableHighVowel :: Parser String (Bool, HighVowel)
 accentableHighVowel = fmap ((,) False) highVowel <|> ai <|> au
 
-accentableLowVowel :: Parser String (Accentable LowVowel)
+accentableLowVowel :: Parser String (Bool, LowVowel)
 accentableLowVowel = fmap ((,) False) lowVowel <|> aa <|> ae <|> ao
 
 core :: Parser String Core
@@ -115,8 +115,8 @@ core =
     -- however, if an 'i/u' was scooped up by the optionalHighVowel, and it was
     -- the main vowel, we'll fail the parse without the second
     -- rule that looks for that specific case.
-    in liftA2 (,) optionalHighVowel vowelAndRightDiph <|>
-       fmap ((,) Nothing . fmap Left) accentableHighVowel
+    in liftA2 (\mhv (b, v) -> (b, mhv, v)) optionalHighVowel vowelAndRightDiph <|>
+       fmap (\(b, v) -> (b, Nothing, Left v)) accentableHighVowel
 
 notEOrI :: Char -> Bool
 notEOrI c = c /= 'e' && c /= 'é' && c /= 'i' && c /= 'í'

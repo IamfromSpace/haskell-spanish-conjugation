@@ -1,7 +1,6 @@
 module Linguistics.Types
     ( HighVowel(..)
     , LowVowel(..)
-    , Accentable
     , Core
     , Liquid(..)
     , StopOrF(..)
@@ -33,11 +32,8 @@ data LowVowel
     | O
     deriving (Show)
 
-type Accentable a = (Bool, a)
-
 type Core
-     = ( Maybe HighVowel
-       , Accentable (Either HighVowel (LowVowel, Maybe HighVowel)))
+     = (Bool, Maybe HighVowel, Either HighVowel (LowVowel, Maybe HighVowel))
 
 data Liquid
     = R
