@@ -11,12 +11,12 @@ class Diphthongizing a where
     diphthongize :: a -> Maybe a
 
 instance Diphthongizing Core where
-    diphthongize (Nothing, Left (False, U)) =
-        Just (Just U, Right ((False, E), Nothing))
-    diphthongize (Nothing, Right ((False, E), Nothing)) =
-        Just (Just I, Right ((False, E), Nothing))
-    diphthongize (Nothing, Right ((False, O), Nothing)) =
-        Just (Just U, Right ((False, E), Nothing))
+    diphthongize (Nothing, (False, Left U)) =
+        Just (Just U, (False, Right (E, Nothing)))
+    diphthongize (Nothing, (False, Right (E, Nothing))) =
+        Just (Just I, (False, Right (E, Nothing)))
+    diphthongize (Nothing, (False, Right (O, Nothing))) =
+        Just (Just U, (False, Right (E, Nothing)))
     diphthongize _ = Nothing
 
 instance Diphthongizing Stem where

@@ -8,6 +8,7 @@ module Linguistics.Intermediate
 import Control.Applicative
 import qualified Data.Maybe as Maybe
 import Linguistics.Diphthongizing
+import Linguistics.Stress
 import Linguistics.Types
 
 dropLastCore ::
@@ -36,7 +37,7 @@ toIntermediate infinitive ending =
         -- must be a u/i) we add another syllable, where the u gets upgraded
         -- to the vowel, and the i becomes a y in the onset.
                 then ( Nothing
-                     , ( (Nothing, Left (False, U))
+                     , ( (Nothing, (False, Left U))
                        , Just (Nothing, Single (Regular Y))) :
                        coreClusters_0)
                 else (mhv1 <|> mhv2, coreClusters_0)
@@ -54,10 +55,6 @@ fromIntermediate ((mo, stemList), (core, endingList, coda)) =
     let (c, slist) = joinStemList core stemList
     in (mo, c, slist ++ endingList, coda)
 
-getAccentState :: Core -> Bool
-getAccentState (_, Left (a, _)) = a
-getAccentState (_, Right ((a, _), _)) = a
-
 getImplicitStressJointRelativeOffset :: Intermediate -> Int
 getImplicitStressJointRelativeOffset ((_, s), (j, e, maybeCoda)) =
     let penultimate =
@@ -69,12 +66,6 @@ getImplicitStressJointRelativeOffset ((_, s), (j, e, maybeCoda)) =
        if penultimate
            then 1
            else 0
-
-hasExplicitStress :: Intermediate -> Bool
-hasExplicitStress (_, (joint, endingSyllables, _))
-  -- this is a bit of an optimization, theoretically a stem can never have
-  -- an explicit accent (otherwise you could end up with two), so we never check it.
- = getAccentState joint || any (getAccentState . snd) endingSyllables
 
 couldDiphthongize :: Intermediate -> Bool
 couldDiphthongize intermediate =

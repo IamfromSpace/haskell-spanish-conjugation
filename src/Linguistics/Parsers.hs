@@ -100,15 +100,23 @@ accentableLowVowel = fmap ((,) False) lowVowel <|> aa <|> ae <|> ao
 
 core :: Parser String Core
 core =
-    let ohv = optional highVowel
+    let optionalHighVowel = optional highVowel
         either a b = fmap Left a <|> fmap Right b
-        lowAndMaybeHigh = liftA2 (,) accentableLowVowel ohv
+        lowAndMaybeHigh = liftA2 (,) accentableLowVowel optionalHighVowel
+        -- the accent info will be _inside_ the either, and we need a utility
+        -- to pull it out.
+        extractAccent e =
+            case e of
+                Left (b, x) -> (b, Left x)
+                Right ((b, x), y) -> (b, Right (x, y))
+        vowelAndRightDiph =
+            fmap extractAccent (either accentableHighVowel lowAndMaybeHigh)
     -- We can almost get this with a single "rule"
-    -- however, if an 'i/u' was scooped up by the ohv, and it was
+    -- however, if an 'i/u' was scooped up by the optionalHighVowel, and it was
     -- the main vowel, we'll fail the parse without the second
     -- rule that looks for that specific case.
-    in liftA2 (,) ohv (either accentableHighVowel lowAndMaybeHigh) <|>
-       fmap ((,) Nothing . Left) accentableHighVowel
+    in liftA2 (,) optionalHighVowel vowelAndRightDiph <|>
+       fmap ((,) Nothing . fmap Left) accentableHighVowel
 
 notEOrI :: Char -> Bool
 notEOrI c = c /= 'e' && c /= 'é' && c /= 'i' && c /= 'í'
