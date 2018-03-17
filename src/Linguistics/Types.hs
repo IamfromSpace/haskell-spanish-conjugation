@@ -48,7 +48,7 @@ type Core
 data Liquid
     = R
     | L
-    deriving (Show)
+    deriving (Show, Eq)
 
 data StopOrF
     = B
@@ -58,18 +58,18 @@ data StopOrF
     | K KCreator
     | P
     | T
-    deriving (Show)
+    deriving (Show, Eq)
 
 data GCreator
     = GFromG
     | GFromGU
-    deriving (Show)
+    deriving (Show, Eq)
 
 data KCreator
     = KFromQU
     | KFromC
     | KFromK
-    deriving (Show)
+    deriving (Show, Eq)
 
 data Regular
     = CH
@@ -80,25 +80,25 @@ data Regular
     | S SCreator
     | V
     | X XCreator
-    deriving (Show)
+    deriving (Show, Eq)
 
 data SCreator
     = SFromZ
     | SFromC
     | SFromS
     | SFromX
-    deriving (Show)
+    deriving (Show, Eq)
 
 data XCreator
     = XFromJ
     | XFromG
-    deriving (Show)
+    deriving (Show, Eq)
 
 data Consonant
     = Liquid Liquid
     | StopOrF StopOrF
     | Regular Regular
-    deriving (Show)
+    deriving (Show, Eq)
 
 data Onset
     = Single Consonant

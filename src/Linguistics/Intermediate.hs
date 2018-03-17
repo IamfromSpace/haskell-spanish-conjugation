@@ -2,10 +2,12 @@ module Linguistics.Intermediate
     ( toStem
     , toIntermediate
     , fromIntermediate
+    , couldDiphthongize
     ) where
 
 import Control.Applicative
 import qualified Data.Maybe as Maybe
+import Linguistics.Diphthongizing
 import Linguistics.Types
 
 dropLastCore ::
@@ -51,3 +53,30 @@ fromIntermediate :: Intermediate -> FullWord
 fromIntermediate ((mo, stemList), (core, endingList, coda)) =
     let (c, slist) = joinStemList core stemList
     in (mo, c, slist ++ endingList, coda)
+
+getAccentState :: Core -> Bool
+getAccentState (_, Left (a, _)) = a
+getAccentState (_, Right ((a, _), _)) = a
+
+getImplicitStressJointRelativeOffset :: Intermediate -> Int
+getImplicitStressJointRelativeOffset ((_, s), (j, e, maybeCoda)) =
+    let penultimate =
+            case maybeCoda of
+                Just (Coda andS c) ->
+                    andS || c == Regular N || c == Regular (S SFromS)
+                Nothing -> True
+    in length e -
+       if penultimate
+           then 1
+           else 0
+
+hasExplicitStress :: Intermediate -> Bool
+hasExplicitStress (_, (joint, endingSyllables, _))
+  -- this is a bit of an optimization, theoretically a stem can never have
+  -- an explicit accent (otherwise you could end up with two), so we never check it.
+ = getAccentState joint || any (getAccentState . snd) endingSyllables
+
+couldDiphthongize :: Intermediate -> Bool
+couldDiphthongize intermediate =
+    getImplicitStressJointRelativeOffset intermediate == -1 &&
+    not (hasExplicitStress intermediate)
