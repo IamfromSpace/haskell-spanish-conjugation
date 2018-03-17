@@ -1,6 +1,7 @@
 module Utils
     ( ($>)
     , liftA4
+    , swapTuple
     ) where
 
 ($>) :: Functor f => f a -> b -> f b
@@ -15,3 +16,6 @@ liftA4 ::
     -> a e
     -> a f
 liftA4 f a0 a1 a2 a3 = f <$> a0 <*> a1 <*> a2 <*> a3
+
+swapTuple :: (a, (b, c)) -> (b, (a, c))
+swapTuple (a, (b, c)) = (b, (a, c))

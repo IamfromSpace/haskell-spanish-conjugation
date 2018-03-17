@@ -14,7 +14,7 @@ import Linguistics.Types
 dropLastCore ::
        Core -> [InnerSyllable] -> (Maybe HighVowel, [(Core, InnerCluster)])
 dropLastCore =
-    let go built a [] = (fst a, built)
+    let go built a [] = (fst (snd a), built)
         go built a ((cluster, b):t) = go ((a, cluster) : built) b t
     in go []
 
@@ -29,7 +29,7 @@ toStem (onset, core, innerSyllables, _) =
 toIntermediate :: FullWord -> Ending -> Intermediate
 toIntermediate infinitive ending =
     let (mhv1, (mo, coreClusters_0)) = toStem infinitive
-        ((mhv2, e), iss, coda) = ending
+        ((isStressed, (mhv2, e)), iss, coda) = ending
         (mhv, coreClusters1) =
             if Maybe.isJust mhv1 && Maybe.isJust mhv2
         -- This ugliness means that if the final syllable of the stem and
@@ -37,11 +37,11 @@ toIntermediate infinitive ending =
         -- must be a u/i) we add another syllable, where the u gets upgraded
         -- to the vowel, and the i becomes a y in the onset.
                 then ( Nothing
-                     , ( (Nothing, (False, Left U))
+                     , ( (False, (Nothing, Left U))
                        , Just (Nothing, Single (Regular Y))) :
                        coreClusters_0)
                 else (mhv1 <|> mhv2, coreClusters_0)
-    in ((mo, coreClusters1), ((mhv, e), iss, coda))
+    in ((mo, coreClusters1), ((isStressed, (mhv, e)), iss, coda))
 
 joinStemList :: Core -> [(Core, InnerCluster)] -> (Core, [InnerSyllable])
 joinStemList =

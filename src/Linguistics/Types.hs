@@ -36,8 +36,8 @@ data LowVowel
 type Accentable a = (Bool, a)
 
 type Core
-     = ( Maybe HighVowel
-       , Accentable (Either HighVowel (LowVowel, Maybe HighVowel)))
+     = Accentable ( Maybe HighVowel
+                  , Either HighVowel (LowVowel, Maybe HighVowel))
 
 data Liquid
     = R

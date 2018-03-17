@@ -50,7 +50,7 @@ import Control.Applicative ((<|>), liftA2, liftA3, many, optional)
 import Linguistics.Types
 import Parser
 import Parser.Utils (char, lookAhead, terminal)
-import Utils (($>), liftA4)
+import Utils (($>), liftA4, swapTuple)
 
 a :: Parser String LowVowel
 a = char 'a' $> A
@@ -115,8 +115,8 @@ core =
     -- however, if an 'i/u' was scooped up by the optionalHighVowel, and it was
     -- the main vowel, we'll fail the parse without the second
     -- rule that looks for that specific case.
-    in liftA2 (,) optionalHighVowel vowelAndRightDiph <|>
-       fmap ((,) Nothing . fmap Left) accentableHighVowel
+    in liftA2 (curry swapTuple) optionalHighVowel vowelAndRightDiph <|>
+       fmap (fmap ((,) Nothing . Left)) accentableHighVowel
 
 notEOrI :: Char -> Bool
 notEOrI c = c /= 'e' && c /= 'é' && c /= 'i' && c /= 'í'

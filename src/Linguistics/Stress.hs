@@ -13,9 +13,6 @@ class ExplicitlyStressable a where
 instance ExplicitlyStressable (Bool, a) where
     hasExplicitStress = fst
 
-instance ExplicitlyStressable Core where
-    hasExplicitStress (_, v) = hasExplicitStress v
-
 instance ExplicitlyStressable Ending where
     hasExplicitStress (joint, endingSyllables, _) =
         hasExplicitStress joint || any (hasExplicitStress . snd) endingSyllables
