@@ -126,4 +126,6 @@ type Stem = (Maybe Onset, [(Core, InnerCluster)])
 
 type Ending = (Core, [InnerSyllable], Maybe Coda)
 
+--TODO: This should probably be (Stem, Core {-Joint-}, Ending)
+--Or maybe (Maybe Onset, PointlyList InnerCluster Core, Maybe Coda)
 type Intermediate = (Stem, Ending)
