@@ -2,6 +2,7 @@ module Utils
     ( ($>)
     , liftA4
     , swapTuple
+    , mHead
     ) where
 
 ($>) :: Functor f => f a -> b -> f b
@@ -19,3 +20,7 @@ liftA4 f a0 a1 a2 a3 = f <$> a0 <*> a1 <*> a2 <*> a3
 
 swapTuple :: (a, (b, c)) -> (b, (a, c))
 swapTuple (a, (b, c)) = (b, (a, c))
+
+mHead :: [a] -> Maybe a
+mHead (h:_) = Just h
+mHead _ = Nothing

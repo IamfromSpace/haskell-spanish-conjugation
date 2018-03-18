@@ -1,15 +1,20 @@
+{-# LANGUAGE TypeSynonymInstances, FlexibleInstances #-}
+
 module Linguistics.Intermediate
     ( toStem
     , toIntermediate
     , fromIntermediate
     , couldDiphthongize
+    , couldVowelRaise
     ) where
 
 import Control.Applicative
+import Data.Maybe (fromMaybe)
 import qualified Data.Maybe as Maybe
 import Linguistics.Diphthongizing
 import Linguistics.Stress
 import Linguistics.Types
+import Utils (mHead)
 
 dropLastCore ::
        Core -> [InnerSyllable] -> (Maybe HighVowel, [(Core, InnerCluster)])
@@ -71,3 +76,45 @@ couldDiphthongize :: Intermediate -> Bool
 couldDiphthongize intermediate =
     getImplicitStressJointRelativeOffset intermediate == -1 &&
     not (hasExplicitStress intermediate)
+
+-- TODO: This seems to be generalizable to a CanStartWith a b,
+-- which would prevent the need to generate lots of type classes
+-- for specific letters/sounds/etc.  However, this whole approach
+-- does seem a little intractable in how it scales out.
+class CanStartWithR a where
+    startsWithR :: a -> Bool
+
+instance CanStartWithR Coda where
+    startsWithR (Coda _ (Liquid R)) = True
+    startsWithR _ = False
+
+instance CanStartWithR Onset where
+    startsWithR (Single (Liquid R)) = True
+    startsWithR _ = False
+
+instance CanStartWithR InnerCluster where
+    startsWithR (Just (Nothing, onset)) = startsWithR onset
+    startsWithR (Just (Just coda, _)) = startsWithR coda
+    startsWithR _ = False
+
+hasStressableI :: Core -> Bool
+hasStressableI (_, (_, Left I)) = True
+hasStressableI _ = False
+
+startsWithIR :: Ending -> Bool
+startsWithIR (jointCore, innerSyllables, mCoda) =
+    hasStressableI jointCore &&
+    fromMaybe
+        False
+        (fmap (startsWithR . fst) (mHead innerSyllables) <|>
+         fmap startsWithR mCoda)
+
+couldVowelRaise :: Bool -> Intermediate -> Bool
+couldVowelRaise diphthongizes intermediate@(_, ending@(joint, _, _)) =
+    let willDiphthongize = diphthongizes && couldDiphthongize intermediate
+        jointIsImplicitlyStressed =
+            getImplicitStressJointRelativeOffset intermediate == 0
+        jointHasStressedI =
+            hasStressableI joint &&
+            (hasExplicitStress joint || jointIsImplicitlyStressed)
+    in not willDiphthongize && not (startsWithIR ending || jointHasStressedI)
