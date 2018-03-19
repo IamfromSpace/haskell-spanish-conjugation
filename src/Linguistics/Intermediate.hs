@@ -38,9 +38,14 @@ toIntermediate infinitive ending =
         (mhv, coreClusters1) =
             if Maybe.isJust mhv1 && Maybe.isJust mhv2
         -- This ugliness means that if the final syllable of the stem and
-        -- the first syllable of the ending have a colliding dipthong (which
-        -- must be a u/i) we add another syllable, where the u gets upgraded
-        -- to the vowel, and the i becomes a y in the onset.
+        -- the first syllable of the ending have a colliding left semi-vowel
+        -- (which must be a u/i), the we add another syllable, where the u gets
+        -- upgraded to the vowel, and the i becomes a y in the onset.
+        -- This is rare, and notably only happens in -uir verbs like
+        -- construir + iendo
+        --       ^     ^
+        -- where the indicated u and i _both_ want to be the left semi-vowel
+        -- in the core.
                 then ( Nothing
                      , ( (False, (Nothing, Left U))
                        , Just (Nothing, Single (Regular Y))) :
