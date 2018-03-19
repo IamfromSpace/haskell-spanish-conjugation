@@ -6,6 +6,8 @@ module Linguistics.Intermediate
     , fromIntermediate
     , couldDiphthongize
     , couldVowelRaise
+    , preventStressedJointDiphthongization
+    , preventAmbiguiousJointDiphthongization
     ) where
 
 import Control.Applicative
@@ -123,3 +125,28 @@ couldVowelRaise diphthongizes intermediate@(_, ending@(joint, _, _)) =
             hasStressableI joint &&
             (hasExplicitStress joint || jointIsImplicitlyStressed)
     in not willDiphthongize && not (startsWithIR ending || jointHasStressedI)
+
+{- TODO: These two rules could use some work on approach/implementation...
+ the pattern match is crazy, but the alternative is about a million checks. -}
+-- Idea here is to prevent a stressed 'i' from becoming a semi-vowel in another core.
+-- An example is "caer" + "imos" == "caímos" (not "caimos").  Without this rule,
+-- the 'i' becomes a semi-vowel, and the 'a' would get the stress,
+-- even though it should fall on the 'i'.
+preventStressedJointDiphthongization :: Intermediate -> Intermediate
+preventStressedJointDiphthongization intermediate@(stem@(_, (_, Nothing):_), ((False, x@(Nothing, Left I)), y, z)) =
+    if getImplicitStressJointRelativeOffset intermediate == 0
+        then (stem, ((True, x), y, z))
+        else intermediate
+preventStressedJointDiphthongization x = x
+
+-- This rule itself seems logically unnecessary, in that syllables are right biased
+-- and as such, "aiaeai" is parsable as "a.ia'e.ai", however, it does _look_ confusing
+-- as to which side the first 'i' should dipthongize with.  As such, it is changed
+-- to a 'y' (which has basically the same sound), to allow the consonant rule make
+-- it more evident which syllable it will be part of.
+-- Notably, this rule is absent in Portuguese.
+preventAmbiguiousJointDiphthongization :: Intermediate -> Intermediate
+preventAmbiguiousJointDiphthongization ((a, (b, Nothing):c), ((d, (Just I, e)), f, g)) =
+    ( (a, (b, Just (Nothing, Single (Regular Y))) : c)
+    , ((d, (Nothing, e)), f, g))
+preventAmbiguiousJointDiphthongization x = x
