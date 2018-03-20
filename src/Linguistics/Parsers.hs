@@ -38,7 +38,6 @@ module Linguistics.Parsers
     , consonant
     , onset
     , coda
-    , syllable
     , innerSyllable
     , word
     , ending
@@ -207,15 +206,6 @@ onset
 
 coda :: Parser String Coda
 coda = fmap (Coda True) (consonant <* char 's') <|> fmap (Coda False) consonant
-
-syllable
-  -- Order is critical here
-  -- Not 100% sure that OnsetAndCore and CoreAndCoda are in
-  -- the correct order, we would prefer to create an onset though...
- =
-    liftA3 OnsetCoreAndCoda onset core coda <|> liftA2 OnsetAndCore onset core <|>
-    liftA2 CoreAndCoda core coda <|>
-    fmap CoreOnly core
 
 innerSyllable :: Parser String InnerSyllable
 innerSyllable

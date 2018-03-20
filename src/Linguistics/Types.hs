@@ -13,7 +13,6 @@ module Linguistics.Types
     , Consonant(..)
     , Onset(..)
     , Coda(..)
-    , Syllable(..)
     , InnerCluster
     , InnerSyllable
     , FullWord
@@ -103,17 +102,6 @@ data Onset
 data Coda =
     Coda Bool
          Consonant
-    deriving (Show)
-
-data Syllable
-    = CoreOnly Core
-    | OnsetAndCore Onset
-                   Core
-    | CoreAndCoda Core
-                  Coda
-    | OnsetCoreAndCoda Onset
-                       Core
-                       Coda
     deriving (Show)
 
 type InnerCluster = Maybe (Maybe Coda, Onset)
