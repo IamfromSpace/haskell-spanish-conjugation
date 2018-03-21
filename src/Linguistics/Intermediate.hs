@@ -6,6 +6,7 @@ module Linguistics.Intermediate
     , couldVowelRaise
     , preventStressedJointDiphthongization
     , preventAmbiguiousJointDiphthongization
+    , preventUirNonIDiphthongization
     ) where
 
 import Control.Applicative
@@ -104,7 +105,7 @@ couldVowelRaise diphthongizes intermediate@(_, ending@(joint, _, _)) =
             (hasExplicitStress joint || jointIsImplicitlyStressed)
     in not willDiphthongize && not (startsWithIR ending || jointHasStressedI)
 
-{- TODO: These two rules could use some work on approach/implementation...
+{- TODO: These three rules could use some work on approach/implementation...
  the pattern match is crazy, but the alternative is about a million checks. -}
 -- Idea here is to prevent a stressed 'i' from becoming a semi-vowel in another core.
 -- An example is "caer" + "imos" == "caímos" (not "caimos").  Without this rule,
@@ -128,3 +129,17 @@ preventAmbiguiousJointDiphthongization ((a, (b, Nothing):c), ((d, (Just I, e)), 
     ( (a, (b, Just (Nothing, Single (Regular Y))) : c)
     , ((d, (Nothing, e)), f, g))
 preventAmbiguiousJointDiphthongization x = x
+
+-- This is yet another y rule.  If we ever end up with a joint that is /u[^i]/
+-- we need to promote the u into the stem and with a medial y.
+-- so construir + o == construyo
+preventUirNonIDiphthongization :: Intermediate -> Intermediate
+preventUirNonIDiphthongization intermediate@((mOnset, iss), ((isAccented, (Just U, v)), a, b)) =
+    case v of
+        Left I -> intermediate
+        _ ->
+            ( ( mOnset
+              , ((False, (Nothing, Left U)), Just (Nothing, Single (Regular Y))) :
+                iss)
+            , ((isAccented, (Nothing, v)), a, b))
+preventUirNonIDiphthongization x = x
