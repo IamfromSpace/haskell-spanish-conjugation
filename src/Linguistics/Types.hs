@@ -66,6 +66,9 @@ data KCreator
 
 data Regular
     = CH
+    -- TODO: H can also appear on the core, and will evenutally
+    -- need to be moved to its own data type.
+    | H
     | M
     | N
     | Ñ
