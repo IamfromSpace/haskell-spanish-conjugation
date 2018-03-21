@@ -26,7 +26,8 @@ instance ContextualRender KCreator where
     contextualRender _ KFromK = "k"
 
 instance ContextualRender SCreator where
-    contextualRender _ SFromZ = "z"
+    contextualRender True SFromZ = "c"
+    contextualRender False SFromZ = "z"
     contextualRender True SFromC = "c"
     contextualRender False SFromC = "z"
     contextualRender _ SFromS = "s"
@@ -72,7 +73,8 @@ instance ContextualRender Onset where
 
 instance ContextualRender InnerCluster where
     contextualRender _ Nothing = ""
-    contextualRender b (Just (mc, o)) = render mc ++ contextualRender b o
+    contextualRender b (Just (Just c, o)) = render c ++ contextualRender b o
+    contextualRender b (Just (Nothing, o)) = contextualRender b o
 
 instance ContextualRender HighVowel
     -- Boolean means "after G-Sound and before I/E"
@@ -87,7 +89,7 @@ instance ContextualRender Core
                                      where
     contextualRender _ (b, (Nothing, Left v)) = render (b, v)
     contextualRender _ (b, (Nothing, Right (v, svr))) =
-        render (b, v) ++ render (fmap ((,) False) svr)
+        render (b, v) ++ maybe "" (render . (,) False) svr
     contextualRender False (b, (Just svl, Left v)) =
         contextualRender False svl ++ render (b, v)
     contextualRender True (b, (Just svl, Left I)) =
@@ -96,20 +98,16 @@ instance ContextualRender Core
         contextualRender False svl ++ render (b, U)
     contextualRender False (b, (Just svl, Right (v, svr))) =
         contextualRender False svl ++
-        render (b, v) ++ render (fmap ((,) False) svr)
+        render (b, v) ++ maybe "" (render . (,) False) svr
     contextualRender True (b, (Just svl, Right (E, svr))) =
         contextualRender True svl ++
-        render (b, E) ++ render (fmap ((,) False) svr)
+        render (b, E) ++ maybe "" (render . (,) False) svr
     contextualRender _ (b, (Just svl, Right (v, svr))) =
         contextualRender False svl ++
-        render (b, v) ++ render (fmap ((,) False) svr)
+        render (b, v) ++ maybe "" (render . (,) False) svr
 
 class Render a where
     render :: a -> String
-
-instance Render a => Render (Maybe a) where
-    render (Just x) = render x
-    render Nothing = ""
 
 instance Render a => Render [a] where
     render = concatMap render
@@ -143,9 +141,10 @@ instance Render InnerSyllable where
 
 instance Render FullWord where
     render (Nothing, core, innerSyllables, mCoda) =
-        contextualRender False core ++ render innerSyllables ++ render mCoda
+        contextualRender False core ++
+        render innerSyllables ++ maybe "" render mCoda
     render (Just onset, core, innerSyllables, mCoda) =
         contextualRender (startsWith I core || startsWith E core) onset ++
         -- Notably, this doesn't actually check if it's a GFromG, just that it's a G
         contextualRender (endsWith (G GFromG) onset) core ++
-        render innerSyllables ++ render mCoda
+        render innerSyllables ++ maybe "" render mCoda

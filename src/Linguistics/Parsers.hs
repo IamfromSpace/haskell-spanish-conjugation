@@ -189,7 +189,8 @@ ch = char 'c' *> char 'h' $> CH
 
 regular :: Parser String Regular
 regular =
-    ch <|> char 'm' $> M <|> char 'n' $> N <|> char 'ñ' $> Ñ <|> char 'y' $> Y <|>
+    ch <|> char 'h' $> H <|> char 'm' $> M <|> char 'n' $> N <|> char 'ñ' $> Ñ <|>
+    char 'y' $> Y <|>
     s <|>
     char 'v' $> V <|>
     x
@@ -212,6 +213,9 @@ innerSyllable
   -- precedence rules here get a little strange
   -- we need to make sure that we first match _just_ an onset
   -- and only try to match a coda + onset if we have to
+  -- And even then, in the case of /.s/ (like in "pensar")
+  -- it will match a coda completely, and then fail, so we need
+  -- another rule (consonantAndS) to protect that one.
  =
     let optionalPThenCore :: Parser String b -> Parser String (Maybe b, Core)
         optionalPThenCore = flip (liftA2 (,)) core . optional
@@ -219,7 +223,14 @@ innerSyllable
         onsetNoCoda = fmap ((,) Nothing) onset
         onsetAndCoda :: Parser String (Maybe Coda, Onset)
         onsetAndCoda = liftA2 (,) (fmap Just coda) onset
-    in optionalPThenCore onsetNoCoda <|> optionalPThenCore onsetAndCoda
+        consonantAndS =
+            liftA2
+                (const .
+                 flip (,) (Single (Regular (S SFromS))) . Just . Coda False)
+                consonant
+                (char 's')
+    in optionalPThenCore onsetNoCoda <|> optionalPThenCore onsetAndCoda <|>
+       optionalPThenCore consonantAndS
 
 word :: Parser String FullWord
 word = liftA4 (,,,) (optional onset) core (many innerSyllable) (optional coda)

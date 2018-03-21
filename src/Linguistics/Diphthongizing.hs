@@ -13,6 +13,8 @@ class Diphthongizing a where
 instance Diphthongizing Core where
     diphthongize (False, (Nothing, Left U)) =
         Just (False, (Just U, Right (E, Nothing)))
+    diphthongize (False, (Nothing, Left I)) =
+        Just (False, (Just I, Right (E, Nothing)))
     diphthongize (False, (Nothing, Right (E, Nothing))) =
         Just (False, (Just I, Right (E, Nothing)))
     diphthongize (False, (Nothing, Right (O, Nothing))) =
