@@ -11,7 +11,6 @@ module Linguistics.Intermediate
 import Control.Applicative
 import Data.Maybe (fromMaybe)
 import qualified Data.Maybe as Maybe
-import Linguistics.Diphthongizing
 import Linguistics.Positional (startsWith)
 import Linguistics.Stress
 import Linguistics.Types
@@ -57,8 +56,8 @@ toIntermediate infinitive ending =
 joinStemList :: Core -> [(Core, InnerCluster)] -> (Core, [InnerSyllable])
 joinStemList =
     let go built core [] = (core, built)
-        go built core0 ((core1, cluster):tail) =
-            go ((cluster, core0) : built) core1 tail
+        go built core0 ((core1, cluster):iss) =
+            go ((cluster, core0) : built) core1 iss
     in go []
 
 fromIntermediate :: Intermediate -> FullWord
@@ -67,7 +66,7 @@ fromIntermediate ((mo, stemList), (core, endingList, coda)) =
     in (mo, c, slist ++ endingList, coda)
 
 getImplicitStressJointRelativeOffset :: Intermediate -> Int
-getImplicitStressJointRelativeOffset ((_, s), (j, e, maybeCoda)) =
+getImplicitStressJointRelativeOffset (_, (_, e, maybeCoda)) =
     let penultimate =
             case maybeCoda of
                 Just (Coda andS c) ->

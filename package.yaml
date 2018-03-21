@@ -19,6 +19,13 @@ description:         Please see the README on Github at <https://github.com/iamf
 
 dependencies:
 - base >= 4.7 && < 5
+ghc-options:
+- -Werror
+- -Wall
+- -fwarn-tabs
+- -fwarn-unused-imports
+- -fwarn-missing-signatures
+- -fwarn-incomplete-patterns
 
 library:
   source-dirs: src

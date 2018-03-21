@@ -8,19 +8,19 @@ module Parser.Utils
 import Parser
 
 satisfy :: (String, Char -> Bool) -> Parser String Char
-satisfy (msg, pred) =
+satisfy (msg, predicate) =
     Parser $ \input ->
         case input of
             (c:cs)
-                | pred c -> Right (c, cs)
+                | predicate c -> Right (c, cs)
             _ -> Left (msg ++ " at: '" ++ input ++ "'.")
 
 lookAhead :: (Char -> Bool) -> Parser String ()
-lookAhead pred =
+lookAhead predicate =
     Parser $ \input ->
         case input of
-            (c:cs)
-                | pred c -> Right ((), input)
+            (c:_)
+                | predicate c -> Right ((), input)
             _ -> Left ("lookAhead failed at: '" ++ input ++ "'.")
 
 terminal :: Parser String ()
