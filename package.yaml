@@ -40,3 +40,15 @@ executables:
     - -with-rtsopts=-N
     dependencies:
     - haskell-spanish-conjugation
+
+tests:
+  haskell-spanish-conjugation-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - haskell-spanish-conjugation
+    - hspec
