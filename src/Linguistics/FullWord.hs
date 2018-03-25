@@ -3,10 +3,27 @@ module Linguistics.FullWord
     , dropMonosyllabicAccent
     , dropSemiVowelIAfterÑ
     , dropSemiVowelIAfterLl
+    , toVerb
     ) where
 
 import Control.Arrow as Arrow
 import Linguistics.Types
+
+splitAtLastCore :: Core -> [InnerSyllable] -> (Core, [(Core, InnerCluster)])
+splitAtLastCore =
+    let go built a [] = (a, built)
+        go built a ((cluster, b):t) = go ((a, cluster) : built) b t
+    in go []
+
+toVerb :: FullWord -> Maybe Verb
+toVerb (mOnset, core, innerSyllables, Just (Coda False (Liquid R))) =
+    let (c, l) = splitAtLastCore core innerSyllables
+    in case c of
+           (_, (mhv, Right (A, Nothing))) -> Just (AR, mOnset, l, mhv)
+           (_, (mhv, Right (E, Nothing))) -> Just (ER, mOnset, l, mhv)
+           (_, (mhv, Left I)) -> Just (IR, mOnset, l, mhv)
+           _ -> Nothing
+toVerb _ = Nothing
 
 -- Can't start a word with a semi-vowel, so we upgrade it or add an h
 preventStartingSemiVowel :: FullWord -> FullWord

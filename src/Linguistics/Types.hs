@@ -13,10 +13,11 @@ module Linguistics.Types
     , Consonant(..)
     , Onset(..)
     , Coda(..)
+    , VerbType(..)
     , InnerCluster
     , InnerSyllable
     , FullWord
-    , Stem
+    , Verb
     , Ending
     , Intermediate
     ) where
@@ -107,16 +108,20 @@ data Coda =
          Consonant
     deriving (Show)
 
+data VerbType
+    = AR
+    | ER
+    | IR
+
 type InnerCluster = Maybe (Maybe Coda, Onset)
 
 type InnerSyllable = (InnerCluster, Core)
 
 type FullWord = (Maybe Onset, Core, [InnerSyllable], Maybe Coda)
 
-type Stem = (Maybe Onset, [(Core, InnerCluster)])
+type Verb = (VerbType, Maybe Onset, [(Core, InnerCluster)], Maybe HighVowel)
 
 type Ending = (Core, [InnerSyllable], Maybe Coda)
 
---TODO: This should probably be (Stem, Core {-Joint-}, Ending)
---Or maybe (Maybe Onset, PointlyList InnerCluster Core, Maybe Coda)
-type Intermediate = (Stem, Ending)
+--TODO: This should mabye be a PointyList in the middle
+type Intermediate = (VerbType, Maybe Onset, [(Core, InnerCluster)], Ending)

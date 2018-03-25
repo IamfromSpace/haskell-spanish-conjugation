@@ -18,7 +18,7 @@ instance ExplicitlyStressable Ending where
         hasExplicitStress joint || any (hasExplicitStress . snd) endingSyllables
 
 instance ExplicitlyStressable Intermediate where
-    hasExplicitStress (_, ending)
+    hasExplicitStress (_, _, _, ending)
       -- this is a bit of an optimization, theoretically a stem can _never_ have
       -- an explicit accent (otherwise you could end up with two), so we never check it.
      = hasExplicitStress ending

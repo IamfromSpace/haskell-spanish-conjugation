@@ -21,12 +21,10 @@ instance Diphthongizing Core where
         Just (False, (Just U, Right (E, Nothing)))
     diphthongize _ = Nothing
 
-instance Diphthongizing Stem where
-    diphthongize (onset, (core, consonants):syllableTail) =
+instance Diphthongizing Intermediate where
+    diphthongize (vt, onset, (core, consonants):syllableTail, ending) =
         fmap
-            (\dipCore -> (onset, (dipCore, consonants) : syllableTail))
+            (\dipCore ->
+                 (vt, onset, (dipCore, consonants) : syllableTail, ending))
             (diphthongize core)
     diphthongize _ = Nothing
-
-instance Diphthongizing Intermediate where
-    diphthongize (s, e) = fmap (flip (,) e) (diphthongize s)

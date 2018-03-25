@@ -17,12 +17,10 @@ instance VowelRaising Core where
         Just (False, (Nothing, Left U))
     raiseVowel _ = Nothing
 
-instance VowelRaising Stem where
-    raiseVowel (onset, (core, consonants):syllableTail) =
+instance VowelRaising Intermediate where
+    raiseVowel (vt, onset, (core, consonants):syllableTail, ending) =
         fmap
-            (\raisedCore -> (onset, (raisedCore, consonants) : syllableTail))
+            (\raisedCore ->
+                 (vt, onset, (raisedCore, consonants) : syllableTail, ending))
             (raiseVowel core)
     raiseVowel _ = Nothing
-
-instance VowelRaising Intermediate where
-    raiseVowel (s, e) = fmap (flip (,) e) (raiseVowel s)

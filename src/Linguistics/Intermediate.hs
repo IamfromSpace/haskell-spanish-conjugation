@@ -1,6 +1,6 @@
 module Linguistics.Intermediate
-    ( toStem
-    , toIntermediate
+    ( toIntermediate
+    , toIntermediate'
     , fromIntermediate
     , couldDiphthongize
     , couldVowelRaise
@@ -12,30 +12,18 @@ module Linguistics.Intermediate
 import Control.Applicative
 import Data.Maybe (fromMaybe)
 import qualified Data.Maybe as Maybe
+import Linguistics.FullWord (toVerb)
 import Linguistics.Positional (startsWith)
 import Linguistics.Stress
 import Linguistics.Types
 import Utils (mHead)
 
-dropLastCore ::
-       Core -> [InnerSyllable] -> (Maybe HighVowel, [(Core, InnerCluster)])
-dropLastCore =
-    let go built a [] = (fst (snd a), built)
-        go built a ((cluster, b):t) = go ((a, cluster) : built) b t
-    in go []
-
-toStem :: FullWord -> (Maybe HighVowel, Stem)
-toStem (onset, core, innerSyllables, _) =
-    let (mhv, l) = dropLastCore core innerSyllables
-    in (mhv, (onset, l))
-
 -- This is all pretty ugly and shows that these types are hardly
 -- "transparent" to the user.  All these actions should be performed
 -- through helper methods rather than destructuring and restructuring.
-toIntermediate :: FullWord -> Ending -> Intermediate
-toIntermediate infinitive ending =
-    let (mhv1, (mo, coreClusters_0)) = toStem infinitive
-        ((isStressed, (mhv2, e)), iss, coda) = ending
+toIntermediate' :: Verb -> Ending -> Intermediate
+toIntermediate' (vt, mo, coreClusters_0, mhv1) ending =
+    let ((isStressed, (mhv2, e)), iss, coda) = ending
         (mhv, coreClusters1) =
             if Maybe.isJust mhv1 && Maybe.isJust mhv2
         -- This ugliness means that if the final syllable of the stem and
@@ -52,7 +40,10 @@ toIntermediate infinitive ending =
                        , Just (Nothing, Single (Regular Y))) :
                        coreClusters_0)
                 else (mhv1 <|> mhv2, coreClusters_0)
-    in ((mo, coreClusters1), ((isStressed, (mhv, e)), iss, coda))
+    in (vt, mo, coreClusters1, ((isStressed, (mhv, e)), iss, coda))
+
+toIntermediate :: FullWord -> Ending -> Maybe Intermediate
+toIntermediate word ending = fmap (`toIntermediate'` ending) (toVerb word)
 
 joinStemList :: Core -> [(Core, InnerCluster)] -> (Core, [InnerSyllable])
 joinStemList =
@@ -62,12 +53,12 @@ joinStemList =
     in go []
 
 fromIntermediate :: Intermediate -> FullWord
-fromIntermediate ((mo, stemList), (core, endingList, coda)) =
+fromIntermediate (_, mo, stemList, (core, endingList, coda)) =
     let (c, slist) = joinStemList core stemList
     in (mo, c, slist ++ endingList, coda)
 
 getImplicitStressJointRelativeOffset :: Intermediate -> Int
-getImplicitStressJointRelativeOffset (_, (_, e, maybeCoda)) =
+getImplicitStressJointRelativeOffset (_, _, _, (_, e, maybeCoda)) =
     let penultimate =
             case maybeCoda of
                 Just (Coda andS c) ->
@@ -96,7 +87,7 @@ startsWithIR (jointCore, innerSyllables, mCoda) =
          fmap (startsWith R) mCoda)
 
 couldVowelRaise :: Bool -> Intermediate -> Bool
-couldVowelRaise diphthongizes intermediate@(_, ending@(joint, _, _)) =
+couldVowelRaise diphthongizes intermediate@(_, _, _, ending@(joint, _, _)) =
     let willDiphthongize = diphthongizes && couldDiphthongize intermediate
         jointIsImplicitlyStressed =
             getImplicitStressJointRelativeOffset intermediate == 0
@@ -112,9 +103,9 @@ couldVowelRaise diphthongizes intermediate@(_, ending@(joint, _, _)) =
 -- the 'i' becomes a semi-vowel, and the 'a' would get the stress,
 -- even though it should fall on the 'i'.
 preventStressedJointDiphthongization :: Intermediate -> Intermediate
-preventStressedJointDiphthongization intermediate@(stem@(_, (_, Nothing):_), ((False, x@(Nothing, Left I)), y, z)) =
+preventStressedJointDiphthongization intermediate@(vt, mOnset, iss@((_, Nothing):_), ((False, x@(Nothing, Left I)), y, z)) =
     if getImplicitStressJointRelativeOffset intermediate == 0
-        then (stem, ((True, x), y, z))
+        then (vt, mOnset, iss, ((True, x), y, z))
         else intermediate
 preventStressedJointDiphthongization x = x
 
@@ -125,8 +116,10 @@ preventStressedJointDiphthongization x = x
 -- it more evident which syllable it will be part of.
 -- Notably, this rule is absent in Portuguese.
 preventAmbiguiousJointDiphthongization :: Intermediate -> Intermediate
-preventAmbiguiousJointDiphthongization ((a, (b, Nothing):c), ((d, (Just I, e)), f, g)) =
-    ( (a, (b, Just (Nothing, Single (Regular Y))) : c)
+preventAmbiguiousJointDiphthongization (vt, a, (b, Nothing):c, ((d, (Just I, e)), f, g)) =
+    ( vt
+    , a
+    , (b, Just (Nothing, Single (Regular Y))) : c
     , ((d, (Nothing, e)), f, g))
 preventAmbiguiousJointDiphthongization x = x
 
@@ -134,12 +127,13 @@ preventAmbiguiousJointDiphthongization x = x
 -- we need to promote the u into the stem and with a medial y.
 -- so construir + o == construyo
 preventUirNonIDiphthongization :: Intermediate -> Intermediate
-preventUirNonIDiphthongization intermediate@((mOnset, iss), ((isAccented, (Just U, v)), a, b)) =
+preventUirNonIDiphthongization intermediate@(vt@IR, mOnset, iss, ((isAccented, (Just U, v)), a, b)) =
     case v of
         Left I -> intermediate
         _ ->
-            ( ( mOnset
-              , ((False, (Nothing, Left U)), Just (Nothing, Single (Regular Y))) :
-                iss)
+            ( vt
+            , mOnset
+            , ((False, (Nothing, Left U)), Just (Nothing, Single (Regular Y))) :
+              iss
             , ((isAccented, (Nothing, v)), a, b))
 preventUirNonIDiphthongization x = x
