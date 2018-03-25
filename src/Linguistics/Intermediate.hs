@@ -61,8 +61,7 @@ getImplicitStressJointRelativeOffset :: Intermediate -> Int
 getImplicitStressJointRelativeOffset (_, _, _, (_, e, maybeCoda)) =
     let penultimate =
             case maybeCoda of
-                Just (Coda andS c) ->
-                    andS || c == Regular N || c == Regular (S SFromS)
+                Just (Coda andS c) -> andS || c == Regular N || c == Regular S
                 Nothing -> True
     in length e -
        if penultimate

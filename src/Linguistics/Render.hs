@@ -12,14 +12,6 @@ import Linguistics.Types
 class ContextualRender a where
     contextualRender :: Bool -> a -> String
 
-instance ContextualRender SCreator where
-    contextualRender True SFromZ = "c"
-    contextualRender False SFromZ = "z"
-    contextualRender True SFromC = "c"
-    contextualRender False SFromC = "z"
-    contextualRender _ SFromS = "s"
-    contextualRender _ SFromX = "x"
-
 instance ContextualRender Liquid where
     contextualRender _ R = "r"
     contextualRender _ L = "l"
@@ -38,6 +30,8 @@ instance ContextualRender StopOrF where
 
 instance ContextualRender Regular where
     contextualRender _ CH = "ch"
+    contextualRender True SoftC = "c"
+    contextualRender False SoftC = "z"
     contextualRender True SoftG = "g"
     contextualRender False SoftG = "j"
     contextualRender _ H = "h"
@@ -45,8 +39,9 @@ instance ContextualRender Regular where
     contextualRender _ M = "m"
     contextualRender _ N = "n"
     contextualRender _ Ñ = "ñ"
+    contextualRender _ S = "s"
+    contextualRender _ X = "x"
     contextualRender _ Y = "y"
-    contextualRender b (S sc) = contextualRender b sc
     contextualRender _ V = "v"
 
 instance ContextualRender Consonant where

@@ -24,11 +24,9 @@ module Linguistics.Parsers
     , hardCFromC
     , hardC
     , stopOrF
-    , sFromZ
-    , sFromC
-    , sFromS
-    , sFromX
-    , s
+    , softCFromZ
+    , softCFromC
+    , softC
     , softG
     , ch
     , regular
@@ -155,20 +153,14 @@ stopOrF =
     char 'p' $> P <|>
     char 't' $> T
 
-sFromZ :: Parser String SCreator
-sFromZ = char 'z' $> SFromZ
+softCFromZ :: Parser String Regular
+softCFromZ = char 'z' $> SoftC
 
-sFromC :: Parser String SCreator
-sFromC = (char 'c' <* lookAhead eOrI) $> SFromC
+softCFromC :: Parser String Regular
+softCFromC = (char 'c' <* lookAhead eOrI) $> SoftC
 
-sFromS :: Parser String SCreator
-sFromS = char 's' $> SFromS
-
-sFromX :: Parser String SCreator
-sFromX = char 'x' $> SFromX
-
-s :: Parser String Regular
-s = fmap S (sFromZ <|> sFromC <|> sFromS <|> sFromX)
+softC :: Parser String Regular
+softC = softCFromZ <|> softCFromC
 
 softG :: Parser String Regular
 softG = (char 'g' <* lookAhead eOrI) $> SoftG
@@ -178,11 +170,12 @@ ch = char 'c' *> char 'h' $> CH
 
 regular :: Parser String Regular
 regular =
-    ch <|> softG <|> char 'h' $> H <|> char 'j' $> J <|> char 'm' $> M <|>
+    ch <|> softC <|> softG <|> char 'h' $> H <|> char 'j' $> J <|> char 'm' $> M <|>
     char 'n' $> N <|>
     char 'ñ' $> Ñ <|>
+    char 's' $> S <|>
     char 'y' $> Y <|>
-    s <|>
+    char 'x' $> X <|>
     char 'v' $> V
 
 consonant :: Parser String Consonant
@@ -215,8 +208,7 @@ innerSyllable
         onsetAndCoda = liftA2 (,) (fmap Just coda) onset
         consonantAndS =
             liftA2
-                (const .
-                 flip (,) (Single (Regular (S SFromS))) . Just . Coda False)
+                (const . flip (,) (Single (Regular S)) . Just . Coda False)
                 consonant
                 (char 's')
     in optionalPThenCore onsetNoCoda <|> optionalPThenCore onsetAndCoda <|>

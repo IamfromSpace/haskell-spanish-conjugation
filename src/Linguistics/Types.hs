@@ -6,7 +6,6 @@ module Linguistics.Types
     , Liquid(..)
     , StopOrF(..)
     , Regular(..)
-    , SCreator(..)
     , Consonant(..)
     , Onset(..)
     , Coda(..)
@@ -56,6 +55,7 @@ data Regular
     = CH
     -- TODO: H can also appear on the core, and will evenutally
     -- need to be moved to its own data type.
+    | SoftC
     | SoftG
     | H
     | J
@@ -63,15 +63,9 @@ data Regular
     | N
     | Ñ
     | Y
-    | S SCreator
+    | S
     | V
-    deriving (Show, Eq)
-
-data SCreator
-    = SFromZ
-    | SFromC
-    | SFromS
-    | SFromX
+    | X
     deriving (Show, Eq)
 
 data Consonant
