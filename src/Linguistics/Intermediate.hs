@@ -1,6 +1,5 @@
 module Linguistics.Intermediate
     ( toIntermediate
-    , toIntermediate'
     , fromIntermediate
     , couldDiphthongize
     , couldVowelRaise
@@ -12,7 +11,6 @@ module Linguistics.Intermediate
 import Control.Applicative
 import Data.Maybe (fromMaybe)
 import qualified Data.Maybe as Maybe
-import Linguistics.FullWord (toVerb)
 import Linguistics.Positional (startsWith)
 import Linguistics.Stress
 import Linguistics.Types
@@ -21,8 +19,8 @@ import Utils (mHead)
 -- This is all pretty ugly and shows that these types are hardly
 -- "transparent" to the user.  All these actions should be performed
 -- through helper methods rather than destructuring and restructuring.
-toIntermediate' :: Verb -> Ending -> Intermediate
-toIntermediate' (vt, mo, coreClusters_0, mhv1) ending =
+toIntermediate :: Verb -> Ending -> Intermediate
+toIntermediate (vt, mo, coreClusters_0, mhv1) ending =
     let ((isStressed, (mhv2, e)), iss, coda) = ending
         (mhv, coreClusters1) =
             if Maybe.isJust mhv1 && Maybe.isJust mhv2
@@ -41,9 +39,6 @@ toIntermediate' (vt, mo, coreClusters_0, mhv1) ending =
                        coreClusters_0)
                 else (mhv1 <|> mhv2, coreClusters_0)
     in (vt, mo, coreClusters1, ((isStressed, (mhv, e)), iss, coda))
-
-toIntermediate :: FullWord -> Ending -> Maybe Intermediate
-toIntermediate word ending = fmap (`toIntermediate'` ending) (toVerb word)
 
 joinStemList :: Core -> [(Core, InnerCluster)] -> (Core, [InnerSyllable])
 joinStemList =

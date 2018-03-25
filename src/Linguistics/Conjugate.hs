@@ -6,19 +6,17 @@ import Linguistics.Diphthongizing
 import Linguistics.FullWord
 import Linguistics.Intermediate
 import Linguistics.Types
+import Linguistics.VerbEnding
 import Linguistics.VowelRaising
 
--- TODO: Could use some tightening up here for when to work with verbs/words
--- (both here and in the intermediate module).
--- This will likely go through some major changes though when this actually
--- looks up the ending from the verb, rather than being supplied an ending.
-conjugate :: Bool -> Bool -> FullWord -> Ending -> Maybe FullWord
-conjugate a b word ending = toVerb word >>= flip (conjugate' a b) ending
-
-conjugate' :: Bool -> Bool -> Verb -> Ending -> Maybe FullWord
-conjugate' diphthongizing vowelRaising verb ending =
-    let intermediate =
-            preventUirNonIDiphthongization (toIntermediate' verb ending)
+-- TODO: this function struture of `Bool -> Bool -> a -> b -> c` is really troublesome to map
+-- And it's only going to get worse as verbs get more properties (diphthong-breaking,
+-- custom preterite/subjunctives, etc)
+conjugate :: Bool -> Bool -> Verb -> SimpleTense -> Maybe FullWord
+conjugate diphthongizing vowelRaising verb@(vt, _, _, _) tense =
+    let ending = getEnding vt tense
+        intermediate =
+            preventUirNonIDiphthongization (toIntermediate verb ending)
         mIntermediate =
             if diphthongizing && couldDiphthongize intermediate
                 then diphthongize intermediate

@@ -5,7 +5,8 @@ import Test.Hspec.Runner (hspec)
 import Control.Applicative
 import Data.Maybe (isJust)
 import Linguistics.Conjugate
-import Linguistics.Parsers (endingOnly, wordOnly)
+import Linguistics.FullWord (toVerb)
+import Linguistics.Parsers (wordOnly)
 import Linguistics.Render
 import Linguistics.Types
 import Linguistics.VerbEnding
@@ -17,126 +18,129 @@ main =
         describe "conjugation and rendering" $ do
             describe "character change" $ do
                 it "handles c -> qu from a -> e" $
-                    tocar "emos" `shouldBe` Right (Just "toquemos")
+                    tocar (PresentSubjunctive Nosotros) `shouldBe` "toquemos"
                 it "handles c -> qu from a -> é" $
-                    tocar "é" `shouldBe` Right (Just "toqué")
+                    tocar (Preterite Yo) `shouldBe` "toqué"
                 it "handles z -> c from a -> e" $
-                    gozar "emos" `shouldBe` Right (Just "gocemos")
+                    gozar (PresentSubjunctive Nosotros) `shouldBe` "gocemos"
                 it "handles z -> c from a -> é" $
-                    gozar "é" `shouldBe` Right (Just "gocé")
+                    gozar (Preterite Yo) `shouldBe` "gocé"
                 it "handles u -> ü from a -> e" $
-                    averiguar "emos" `shouldBe` Right (Just "averigüemos")
+                    averiguar (PresentSubjunctive Nosotros) `shouldBe`
+                    "averigüemos"
                 it "handles qu -> c from e -> a" $
-                    delinquir "amos" `shouldBe` Right (Just "delincamos")
+                    delinquir (PresentSubjunctive Nosotros) `shouldBe`
+                    "delincamos"
                 it "handles c -> z from e -> o" $
-                    vencer "o" `shouldBe` Right (Just "venzo")
+                    vencer (Present Yo) `shouldBe` "venzo"
                 it "handles g -> j from e -> a" $
-                    proteger "amos" `shouldBe` Right (Just "protejamos")
+                    proteger (PresentSubjunctive Nosotros) `shouldBe`
+                    "protejamos"
                 it "handles gu -> g from i -> a" $
-                    distinguir "amos" `shouldBe` Right (Just "distingamos")
+                    distinguir (PresentSubjunctive Nosotros) `shouldBe`
+                    "distingamos"
                 it "handles +y in uir -> o" $
-                    construir "o" `shouldBe` Right (Just "construyo")
+                    construir (Present Yo) `shouldBe` "construyo"
                 it "handles +y and -ü from üir -> o" $
-                    argüir "o" `shouldBe` Right (Just "arguyo")
+                    argüir (Present Yo) `shouldBe` "arguyo"
             describe "handles no special rules for..." $ do
                 it "averiguar + amos" $
-                    averiguar "amos" `shouldBe` Right (Just "averiguamos")
+                    averiguar (Present Nosotros) `shouldBe` "averiguamos"
                 it "hablar + emos" $
-                    hablar "emos" `shouldBe` Right (Just "hablemos")
-                it "hablar + emos" $
-                    hablar "emos" `shouldBe` Right (Just "hablemos")
-                it "distinguir + emos" $
-                    distinguir "emos" `shouldBe` Right (Just "distinguemos")
+                    hablar (PresentSubjunctive Nosotros) `shouldBe` "hablemos"
+                it "distinguir + es" $
+                    distinguir (Present Tú) `shouldBe` "distingues"
                 it "correr + amos" $
-                    correr "amos" `shouldBe` Right (Just "corramos")
+                    correr (PresentSubjunctive Nosotros) `shouldBe` "corramos"
                 it "construir + ía" $
-                    construir "ía" `shouldBe` Right (Just "construía")
-                it "argüir + ía" $ argüir "ía" `shouldBe` Right (Just "argüía")
+                    construir (Imperfect Usted) `shouldBe` "construía"
+                it "argüir + ía" $ argüir (Imperfect Usted) `shouldBe` "argüía"
             describe "accent i when stressed" $ do
-                it "0" $ caer "imos" `shouldBe` Right (Just "caímos")
-                it "1" $ caer "iste" `shouldBe` Right (Just "caíste")
-                it "2" $ leer "imos" `shouldBe` Right (Just "leímos")
-                it "3" $ oír "imos" `shouldBe` Right (Just "oímos")
+                it "0" $ caer (Preterite Nosotros) `shouldBe` "caímos"
+                it "1" $ caer (Preterite Tú) `shouldBe` "caíste"
+                it "2" $ leer (Preterite Nosotros) `shouldBe` "leímos"
+                it "3" $ oír (Preterite Nosotros) `shouldBe` "oímos"
             describe "remove accents in monosyllabic forms" $ do
-                it "0" $ liar "é" `shouldBe` Right (Just "lie")
-                it "1" $ liar "ó" `shouldBe` Right (Just "lio")
-                it "2" $ ver "í" `shouldBe` Right (Just "vi")
-                it "3" $ ver "ió" `shouldBe` Right (Just "vio")
+                it "0" $ liar (Preterite Yo) `shouldBe` "lie"
+                it "1" $ liar (Preterite Usted) `shouldBe` "lio"
+                it "2" $ ver (Preterite Yo) `shouldBe` "vi"
+                it "3" $ ver (Preterite Usted) `shouldBe` "vio"
             describe "replace an semivowel left i with a y between cores" $ do
-                it "0" $ caer "ió" `shouldBe` Right (Just "cayó")
-                it "1" $ caer "ieron" `shouldBe` Right (Just "cayeron")
-                it "2" $ construir "ió" `shouldBe` Right (Just "construyó")
-                it "3" $ argüir "iendo" `shouldBe` Right (Just "arguyendo")
+                it "0" $ caer (Preterite Usted) `shouldBe` "cayó"
+                it "1" $ caer (Preterite Ustedes) `shouldBe` "cayeron"
+                it "2" $ construir (Preterite Usted) `shouldBe` "construyó"
+                it "3" $ argüir PresentParticiple `shouldBe` "arguyendo"
             describe
                 "not replace an unstressed i with a y between a silent vowels" $ do
-                it "0" $ delinquir "ió" `shouldBe` Right (Just "delinquió")
-                it "1" $
-                    delinquir "ieron" `shouldBe` Right (Just "delinquieron")
-                it "2" $ distinguir "ió" `shouldBe` Right (Just "distinguió")
+                it "0" $ delinquir (Preterite Usted) `shouldBe` "delinquió"
+                it "1" $ delinquir (Preterite Ustedes) `shouldBe` "delinquieron"
+                it "2" $ distinguir (Preterite Usted) `shouldBe` "distinguió"
                 it "3" $
-                    distinguir "ieron" `shouldBe` Right (Just "distinguieron")
+                    distinguir (Preterite Ustedes) `shouldBe` "distinguieron"
             describe "drop unneeded semi-vowel left" $ do
                 it "drop a semivowel left i after a ll" $
-                    bullir "ió" `shouldBe` Right (Just "bulló")
+                    bullir (Preterite Usted) `shouldBe` "bulló"
                 it "drop a semivowel left i after a ñ" $
-                    tañer "ió" `shouldBe` Right (Just "tañó")
+                    tañer (Preterite Usted) `shouldBe` "tañó"
             describe "should stem change if stressed" $ do
-                it "e" $ pensar "o" `shouldBe` Right (Just "pienso")
-                it "o" $ contar "o" `shouldBe` Right (Just "cuento")
-                it "i" $ adquirir "o" `shouldBe` Right (Just "adquiero")
-                it "u" $ jugar "o" `shouldBe` Right (Just "juego")
+                it "e" $ pensar (Present Yo) `shouldBe` "pienso"
+                it "o" $ contar (Present Yo) `shouldBe` "cuento"
+                it "i" $ adquirir (Present Yo) `shouldBe` "adquiero"
+                it "u" $ jugar (Present Yo) `shouldBe` "juego"
             describe "should not stem change if not stressed" $ do
-                it "e" $ pensar "amos" `shouldBe` Right (Just "pensamos")
-                it "o" $ contar "amos" `shouldBe` Right (Just "contamos")
-                it "i" $ adquirir "emos" `shouldBe` Right (Just "adquiremos")
-                it "u" $ jugar "amos" `shouldBe` Right (Just "jugamos")
+                it "e" $ pensar (Present Nosotros) `shouldBe` "pensamos"
+                it "o" $ contar (Present Nosotros) `shouldBe` "contamos"
+                it "i" $ adquirir (Present Nosotros) `shouldBe` "adquirimos"
+                it "u" $ jugar (Present Nosotros) `shouldBe` "jugamos"
             describe "should not stem change when ending is explicitly accented" $ do
-                it "e" $ pensar "ó" `shouldBe` Right (Just "pensó")
-                it "o" $ contar "ó" `shouldBe` Right (Just "contó")
-                it "i" $ adquirir "ió" `shouldBe` Right (Just "adquirió")
-                it "u" $ jugar "ó" `shouldBe` Right (Just "jugó")
+                it "e" $ pensar (Preterite Usted) `shouldBe` "pensó"
+                it "o" $ contar (Preterite Usted) `shouldBe` "contó"
+                it "i" $ adquirir (Preterite Usted) `shouldBe` "adquirió"
+                it "u" $ jugar (Preterite Usted) `shouldBe` "jugó"
             describe
                 "raise for non-diphthongizers when the ending doesn't have ir or í" $ do
-                it "o" $ pedir "o" `shouldBe` Right (Just "pido")
-                it "a" $ pedir "a" `shouldBe` Right (Just "pida")
-                it "e" $ pedir "e" `shouldBe` Right (Just "pide")
+                it "o" $ pedir (Present Yo) `shouldBe` "pido"
+                it "a" $ pedir (PresentSubjunctive Usted) `shouldBe` "pida"
+                it "e" $ pedir (Present Usted) `shouldBe` "pide"
             describe
                 "raise for diphthongizers when no diphthong is created and ending does not included ir or í" $ do
-                it "durmamos" $ dormir "amos" `shouldBe` Right (Just "durmamos")
-                it "durmiendo" $
-                    dormir "iendo" `shouldBe` Right (Just "durmiendo")
+                it "durmamos" $
+                    dormir (PresentSubjunctive Nosotros) `shouldBe` "durmamos"
+                it "durmiendo" $ dormir PresentParticiple `shouldBe` "durmiendo"
                 it "durmieron" $
-                    dormir "ieron" `shouldBe` Right (Just "durmieron")
-                it "sintamos" $ sentir "amos" `shouldBe` Right (Just "sintamos")
-                it "sintiendo" $
-                    sentir "iendo" `shouldBe` Right (Just "sintiendo")
+                    dormir (Preterite Ustedes) `shouldBe` "durmieron"
+                it "sintamos" $
+                    sentir (PresentSubjunctive Nosotros) `shouldBe` "sintamos"
+                it "sintiendo" $ sentir PresentParticiple `shouldBe` "sintiendo"
                 it "sintieron" $
-                    sentir "ieron" `shouldBe` Right (Just "sintieron")
+                    sentir (Preterite Ustedes) `shouldBe` "sintieron"
             describe
                 "not raise for diphthongizers when a diphthong is created when it otherwise would" $ do
-                it "duermo" $ dormir "o" `shouldBe` Right (Just "duermo")
-                it "duerma" $ dormir "a" `shouldBe` Right (Just "duerma")
-                it "duerme" $ dormir "e" `shouldBe` Right (Just "duerme")
-                it "siento" $ sentir "o" `shouldBe` Right (Just "siento")
-                it "sienta" $ sentir "a" `shouldBe` Right (Just "sienta")
-                it "siente" $ sentir "e" `shouldBe` Right (Just "siente")
+                it "duermo" $ dormir (Present Yo) `shouldBe` "duermo"
+                it "duerma" $
+                    dormir (PresentSubjunctive Usted) `shouldBe` "duerma"
+                it "duerme" $ dormir (Present Usted) `shouldBe` "duerme"
+                it "siento" $ sentir (Present Yo) `shouldBe` "siento"
+                it "sienta" $
+                    sentir (PresentSubjunctive Usted) `shouldBe` "sienta"
+                it "siente" $ sentir (Present Usted) `shouldBe` "siente"
             describe "misc" $ do
                 it "should not start with a semivowel i" $
-                    oler "o" `shouldBe` Right (Just "huelo")
+                    oler (Present Yo) `shouldBe` "huelo"
                 it "should not start with a semivowel u" $
-                    errar "o" `shouldBe` Right (Just "yerro")
+                    errar (Present Yo) `shouldBe` "yerro"
                 it "should preserve a hard g in 'go' -> 'gue'" $
-                    avergonzar "o" `shouldBe` Right (Just "avergüenzo")
+                    avergonzar (Present Yo) `shouldBe` "avergüenzo"
                 it
                     "not raise when the ending does not included ir or í (diphthong or not)" $
-                    sentir "ido" `shouldBe` Right (Just "sentido")
+                    sentir PastParticiple `shouldBe` "sentido"
         describe "parser + render" $
             prop
                 "should give back the same result if parsed then rendered"
                 (\x ->
-                     case fmap render (p wordOnly x) of
-                         Left _ -> True
-                         Right s -> s == x)
+                     case runParser wordOnly x of
+                         Right (s, "") -> render s == x
+                         _ -> True)
         describe "getEnding" $
             it "does not throw for any ending" $
             -- There may be a more clever way to make sure this is exhaustive
@@ -156,16 +160,28 @@ main =
                 -- Evaluation of the list must be force, done here by checking for a coda
             in length (filter (\(_, _, x) -> isJust x) allEndings) `shouldBe` 63
 
-type VerbHelper = String -> Either String (Maybe String)
+type VerbHelper = SimpleTense -> String
 
-p :: Parser String a -> String -> Either String a
-p parser str = fmap fst (runParser parser str)
+-- TODO: these are probably _close_ to being useful lib functions
+cong :: Bool -> Bool -> FullWord -> SimpleTense -> Maybe String
+cong diph vR fw st = fmap render (toVerb fw >>= flip (conjugate diph vR) st)
 
+-- This is not total, but that's actually perfect for our tests
 v :: Bool -> Bool -> String -> VerbHelper
-v diph vR w e =
-    fmap
-        (fmap render)
-        (liftA2 (conjugate diph vR) (p wordOnly w) (p endingOnly e))
+v diph vR str st =
+    let renderedParser = fmap (\fw -> cong diph vR fw st) wordOnly
+    in case runParser renderedParser str of
+           Right (Just rendered, "") -> rendered
+           Right (Just _, _:_)
+               -- This case really should be impossible by using `wordOnly`
+            ->
+               error
+                   "Test inputs are invalid!  Verb string was not fully parsed!"
+           Right (Nothing, _) ->
+               error
+                   "Test inputs are invalid!  Verb had no valid conjugation (did not end with ar/er/ir, could not diphthongize, etc)!"
+           Left _ ->
+               error "Test inputs are invalid!  Verb string was not parseable!"
 
 tocar :: VerbHelper
 tocar = v False False "tocar"
