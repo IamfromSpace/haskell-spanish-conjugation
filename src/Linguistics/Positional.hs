@@ -46,17 +46,8 @@ instance CanStartWith LowVowel Core where
 class EndsWith a b where
     endsWith :: a -> b -> Bool
 
--- This one is a little awkward, in that things like G/K
--- can have variants on how they are created, but this totally
--- ignores that, even though you do have to supply a _complete_ G/K
 instance EndsWith StopOrF Onset where
-    endsWith B (Single (StopOrF B)) = True
-    endsWith D (Single (StopOrF D)) = True
-    endsWith F (Single (StopOrF F)) = True
-    endsWith HardG (Single (StopOrF HardG)) = True
-    endsWith (K _) (Single (StopOrF (K _))) = True
-    endsWith P (Single (StopOrF P)) = True
-    endsWith T (Single (StopOrF T)) = True
+    endsWith x (Single (StopOrF y)) = x == y
     endsWith _ _ = False
 
 instance EndsWith StopOrF InnerCluster where

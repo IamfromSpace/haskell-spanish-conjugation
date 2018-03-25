@@ -12,13 +12,6 @@ import Linguistics.Types
 class ContextualRender a where
     contextualRender :: Bool -> a -> String
 
-instance ContextualRender KCreator where
-    contextualRender True KFromQU = "qu"
-    contextualRender False KFromQU = "c"
-    contextualRender True KFromC = "qu"
-    contextualRender False KFromC = "c"
-    contextualRender _ KFromK = "k"
-
 instance ContextualRender SCreator where
     contextualRender True SFromZ = "c"
     contextualRender False SFromZ = "z"
@@ -41,7 +34,9 @@ instance ContextualRender StopOrF where
     contextualRender _ F = "f"
     contextualRender True HardG = "gu"
     contextualRender False HardG = "g"
-    contextualRender b (K kc) = contextualRender b kc
+    contextualRender _ K = "k"
+    contextualRender True HardC = "qu"
+    contextualRender False HardC = "c"
     contextualRender _ P = "p"
     contextualRender _ T = "t"
 

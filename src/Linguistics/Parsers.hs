@@ -20,10 +20,9 @@ module Linguistics.Parsers
     , gFromG
     , gFromGu
     , g
-    , kFromQu
-    , kFromC
-    , kFromK
-    , k
+    , hardCFromQu
+    , hardCFromC
+    , hardC
     , stopOrF
     , sFromZ
     , sFromC
@@ -137,26 +136,24 @@ g
   -- Order is critical here
  = gFromGu <|> gFromG
 
-kFromQu :: Parser String KCreator
-kFromQu = (char 'q' <* char 'u' <* lookAhead eOrI) $> KFromQU
+hardCFromQu :: Parser String StopOrF
+hardCFromQu = (char 'q' <* char 'u' <* lookAhead eOrI) $> HardC
 
-kFromC :: Parser String KCreator
-kFromC
+hardCFromC :: Parser String StopOrF
+hardCFromC
   -- Pretty much just loan words that allow terminal 'c'
   -- But included for consistency with allowking a terminal 'k'
  =
     (char 'c' <* ((lookAhead notEOrI *> lookAhead (/= 'h')) <|> terminal)) $>
-    KFromC
+    HardC
 
-kFromK :: Parser String KCreator
-kFromK = char 'k' $> KFromK
-
-k :: Parser String StopOrF
-k = fmap K (kFromQu <|> kFromC <|> kFromK)
+hardC :: Parser String StopOrF
+hardC = hardCFromQu <|> hardCFromC
 
 stopOrF :: Parser String StopOrF
 stopOrF =
-    char 'b' $> B <|> char 'd' $> D <|> char 'f' $> F <|> g <|> k <|>
+    char 'b' $> B <|> char 'd' $> D <|> char 'f' $> F <|> g <|> char 'k' $> K <|>
+    hardC <|>
     char 'p' $> P <|>
     char 't' $> T
 

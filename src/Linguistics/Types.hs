@@ -5,7 +5,6 @@ module Linguistics.Types
     , Core
     , Liquid(..)
     , StopOrF(..)
-    , KCreator(..)
     , Regular(..)
     , SCreator(..)
     , XCreator(..)
@@ -48,15 +47,10 @@ data StopOrF
     | D
     | F
     | HardG
-    | K KCreator
+    | K
+    | HardC
     | P
     | T
-    deriving (Show, Eq)
-
-data KCreator
-    = KFromQU
-    | KFromC
-    | KFromK
     deriving (Show, Eq)
 
 data Regular
