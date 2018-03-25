@@ -91,6 +91,10 @@ getEnding' _ (ImperfectSubjunctive _) = "iera"
 -- just a mess and are basically meaningless to the human reader.
 -- It just doesn't seem like a practical solution.
 getEnding :: VerbType -> SimpleTense -> Ending
-getEnding x y =
-    let Right (z, _) = runParser endingOnly (getEnding' x y)
-    in z
+getEnding vt st =
+    case runParser endingOnly (getEnding' vt st) of
+        Right (z, _) -> z
+        _ ->
+            error
+                ("An ending was unparsable! For " ++
+                 show vt ++ " - " ++ show st ++ ".")

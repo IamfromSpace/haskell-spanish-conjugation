@@ -26,6 +26,7 @@ ghc-options:
 - -fwarn-unused-imports
 - -fwarn-missing-signatures
 - -fwarn-incomplete-patterns
+- -fwarn-incomplete-uni-patterns
 
 library:
   source-dirs: src
