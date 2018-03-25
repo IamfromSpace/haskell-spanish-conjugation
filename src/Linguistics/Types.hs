@@ -91,6 +91,7 @@ data VerbType
     = AR
     | ER
     | IR
+    deriving (Show, Eq)
 
 type InnerCluster = Maybe (Maybe Coda, Onset)
 
@@ -111,6 +112,7 @@ data Subject
     | Usted
     | Nosotros
     | Ustedes
+    deriving (Show, Eq)
 
 -- To Consider, should Imperfect/Present/Future also accept a mood (Indicative/Subjunctive)?
 -- That makes it nested rather than flat, but is maybe more accurate/detailed
@@ -125,3 +127,4 @@ data SimpleTense
     | Preterite Subject
     | PresentSubjunctive Subject
     | ImperfectSubjunctive Subject
+    deriving (Show, Eq)

@@ -3,9 +3,12 @@ import Test.Hspec.QuickCheck (prop)
 import Test.Hspec.Runner (hspec)
 
 import Control.Applicative
+import Data.Maybe (isJust)
 import Linguistics.Conjugate
 import Linguistics.Parsers (endingOnly, wordOnly)
 import Linguistics.Render
+import Linguistics.Types
+import Linguistics.VerbEnding
 import Parser
 
 main :: IO ()
@@ -134,6 +137,24 @@ main =
                      case fmap render (p wordOnly x) of
                          Left _ -> True
                          Right s -> s == x)
+        describe "getEnding" $
+            it "does not throw for any ending" $
+            -- There may be a more clever way to make sure this is exhaustive
+            -- but notably, if a new tense is added, the type checker won't let us know
+            let allTenses =
+                    [Infinitive, PastParticiple, PresentParticiple] ++
+                    ([ Conditional
+                     , Future
+                     , Imperfect
+                     , Present
+                     , Preterite
+                     , PresentSubjunctive
+                     , ImperfectSubjunctive
+                     ] <*>
+                     [Yo, Tú, Usted, Nosotros, Ustedes])
+                allEndings = liftA2 getEnding [AR, ER, IR] allTenses
+                -- Evaluation of the list must be force, done here by checking for a coda
+            in length (filter (\(_, _, x) -> isJust x) allEndings) `shouldBe` 63
 
 type VerbHelper = String -> Either String (Maybe String)
 
