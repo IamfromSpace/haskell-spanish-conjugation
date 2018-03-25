@@ -29,9 +29,7 @@ module Linguistics.Parsers
     , sFromS
     , sFromX
     , s
-    , xFromJ
-    , xFromG
-    , x
+    , softG
     , ch
     , regular
     , consonant
@@ -172,25 +170,20 @@ sFromX = char 'x' $> SFromX
 s :: Parser String Regular
 s = fmap S (sFromZ <|> sFromC <|> sFromS <|> sFromX)
 
-xFromJ :: Parser String XCreator
-xFromJ = char 'j' $> XFromJ
-
-xFromG :: Parser String XCreator
-xFromG = (char 'g' <* lookAhead eOrI) $> XFromG
-
-x :: Parser String Regular
-x = fmap X (xFromJ <|> xFromG)
+softG :: Parser String Regular
+softG = (char 'g' <* lookAhead eOrI) $> SoftG
 
 ch :: Parser String Regular
 ch = char 'c' *> char 'h' $> CH
 
 regular :: Parser String Regular
 regular =
-    ch <|> char 'h' $> H <|> char 'm' $> M <|> char 'n' $> N <|> char 'ñ' $> Ñ <|>
+    ch <|> softG <|> char 'h' $> H <|> char 'j' $> J <|> char 'm' $> M <|>
+    char 'n' $> N <|>
+    char 'ñ' $> Ñ <|>
     char 'y' $> Y <|>
     s <|>
-    char 'v' $> V <|>
-    x
+    char 'v' $> V
 
 consonant :: Parser String Consonant
 consonant

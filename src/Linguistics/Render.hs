@@ -20,10 +20,6 @@ instance ContextualRender SCreator where
     contextualRender _ SFromS = "s"
     contextualRender _ SFromX = "x"
 
-instance ContextualRender XCreator where
-    contextualRender True XFromG = "g"
-    contextualRender _ _ = "j"
-
 instance ContextualRender Liquid where
     contextualRender _ R = "r"
     contextualRender _ L = "l"
@@ -42,14 +38,16 @@ instance ContextualRender StopOrF where
 
 instance ContextualRender Regular where
     contextualRender _ CH = "ch"
+    contextualRender True SoftG = "g"
+    contextualRender False SoftG = "j"
     contextualRender _ H = "h"
+    contextualRender _ J = "j"
     contextualRender _ M = "m"
     contextualRender _ N = "n"
     contextualRender _ Ñ = "ñ"
     contextualRender _ Y = "y"
     contextualRender b (S sc) = contextualRender b sc
     contextualRender _ V = "v"
-    contextualRender b (X xc) = contextualRender b xc
 
 instance ContextualRender Consonant where
     contextualRender b (Liquid x) = contextualRender b x
