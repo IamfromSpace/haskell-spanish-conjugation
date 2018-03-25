@@ -16,6 +16,8 @@ module Linguistics.Types
     , Verb
     , Ending
     , Intermediate
+    , Subject(..)
+    , SimpleTense(..)
     ) where
 
 data HighVowel
@@ -102,3 +104,24 @@ type Ending = (Core, [InnerSyllable], Maybe Coda)
 
 --TODO: This should mabye be a PointyList in the middle
 type Intermediate = (VerbType, Maybe Onset, [(Core, InnerCluster)], Ending)
+
+data Subject
+    = Yo
+    | Tú
+    | Usted
+    | Nosotros
+    | Ustedes
+
+-- To Consider, should Imperfect/Present/Future also accept a mood (Indicative/Subjunctive)?
+-- That makes it nested rather than flat, but is maybe more accurate/detailed
+data SimpleTense
+    = Infinitive
+    | PastParticiple
+    | PresentParticiple
+    | Conditional Subject
+    | Future Subject
+    | Imperfect Subject
+    | Present Subject
+    | Preterite Subject
+    | PresentSubjunctive Subject
+    | ImperfectSubjunctive Subject
