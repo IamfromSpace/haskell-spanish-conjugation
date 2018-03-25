@@ -126,16 +126,16 @@ eOrI = not . notEOrI
 liquid :: Parser String Liquid
 liquid = (char 'r' $> R) <|> (char 'l' $> L)
 
-gFromG :: Parser String GCreator
-gFromG = (char 'g' <* (lookAhead notEOrI <|> terminal)) $> GFromG
+gFromG :: Parser String StopOrF
+gFromG = (char 'g' <* (lookAhead notEOrI <|> terminal)) $> HardG
 
-gFromGu :: Parser String GCreator
-gFromGu = (char 'g' <* char 'u' <* lookAhead eOrI) $> GFromGU
+gFromGu :: Parser String StopOrF
+gFromGu = (char 'g' <* char 'u' <* lookAhead eOrI) $> HardG
 
 g :: Parser String StopOrF
 g
   -- Order is critical here
- = fmap G (gFromGu <|> gFromG)
+ = gFromGu <|> gFromG
 
 kFromQu :: Parser String KCreator
 kFromQu = (char 'q' <* char 'u' <* lookAhead eOrI) $> KFromQU

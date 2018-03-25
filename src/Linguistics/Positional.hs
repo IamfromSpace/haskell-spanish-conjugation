@@ -53,7 +53,7 @@ instance EndsWith StopOrF Onset where
     endsWith B (Single (StopOrF B)) = True
     endsWith D (Single (StopOrF D)) = True
     endsWith F (Single (StopOrF F)) = True
-    endsWith (G _) (Single (StopOrF (G _))) = True
+    endsWith HardG (Single (StopOrF HardG)) = True
     endsWith (K _) (Single (StopOrF (K _))) = True
     endsWith P (Single (StopOrF P)) = True
     endsWith T (Single (StopOrF T)) = True

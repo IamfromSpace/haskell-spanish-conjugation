@@ -12,12 +12,6 @@ import Linguistics.Types
 class ContextualRender a where
     contextualRender :: Bool -> a -> String
 
-instance ContextualRender GCreator where
-    contextualRender True GFromG = "gu"
-    contextualRender False GFromG = "g"
-    contextualRender True GFromGU = "gu"
-    contextualRender False GFromGU = "g"
-
 instance ContextualRender KCreator where
     contextualRender True KFromQU = "qu"
     contextualRender False KFromQU = "c"
@@ -45,7 +39,8 @@ instance ContextualRender StopOrF where
     contextualRender _ B = "b"
     contextualRender _ D = "d"
     contextualRender _ F = "f"
-    contextualRender b (G gc) = contextualRender b gc
+    contextualRender True HardG = "gu"
+    contextualRender False HardG = "g"
     contextualRender b (K kc) = contextualRender b kc
     contextualRender _ P = "p"
     contextualRender _ T = "t"
@@ -136,8 +131,7 @@ instance Render (Accentable LowVowel) where
 instance Render InnerSyllable where
     render (innerCluster, core) =
         contextualRender (startsWith I core || startsWith E core) innerCluster ++
-        -- Notably, this doesn't actually check if it's a GFromG, just that it's a G
-        contextualRender (endsWith (G GFromG) innerCluster) core
+        contextualRender (endsWith HardG innerCluster) core
 
 instance Render FullWord where
     render (Nothing, core, innerSyllables, mCoda) =
@@ -145,6 +139,5 @@ instance Render FullWord where
         render innerSyllables ++ maybe "" render mCoda
     render (Just onset, core, innerSyllables, mCoda) =
         contextualRender (startsWith I core || startsWith E core) onset ++
-        -- Notably, this doesn't actually check if it's a GFromG, just that it's a G
-        contextualRender (endsWith (G GFromG) onset) core ++
+        contextualRender (endsWith HardG onset) core ++
         render innerSyllables ++ maybe "" render mCoda
