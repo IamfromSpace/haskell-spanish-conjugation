@@ -2,3 +2,5 @@
 *.cabal
 *.swp
 *~
+out/
+out.apkg
