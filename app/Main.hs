@@ -3,7 +3,9 @@
 module Main where
 
 import Control.Applicative (pure)
-import Database.SQLite.Simple (Query, close, execute_, open)
+import Database.SQLite.Simple
+       (NamedParam((:=)), Query, close, execute, executeNamed, execute_,
+        open)
 import qualified Linguistics.Parsers as LP
 import qualified Parser as P
 
@@ -90,13 +92,13 @@ createGraves =
   \ type            integer not null\n\
   \ );"
 
-insertNoteHello :: Query
-insertNoteHello =
-    "INSERT INTO notes VALUES(1398130088495,'Ot0!xywPWG',1342697561419,1398130110,-1,'','Does it work?\USIt does!','Check',4077833205,0,'');"
+insertNote :: Query
+insertNote =
+    "INSERT INTO notes VALUES(:noteId,:noteGuid,1342697561419,:noteId,-1,:tags,:content,:searchValue,:checkSum,0,'');"
 
-insertCardHello :: Query
-insertCardHello =
-    "INSERT INTO cards VALUES(1398130110964,1398130088495,1398130078204,0,1398130110,-1,0,0,484332854,0,0,0,0,0,0,0,0,'');"
+insertCard :: Query
+insertCard =
+    "INSERT INTO cards VALUES(:cardId,:noteId,1398130078204,0,:cardId,-1,0,0,:noteId,0,0,0,0,0,0,0,0,'');"
 
 analyzeAndIndex :: Query
 analyzeAndIndex =
@@ -119,7 +121,21 @@ main = do
     execute_ conn createCards
     execute_ conn createRevLog
     execute_ conn createGraves
-    execute_ conn insertNoteHello
-    execute_ conn insertCardHello
+    executeNamed
+        conn
+        insertNote
+        [ ":content" := ("Does it work?\US'It does!" :: String)
+        , ":searchValue" := ("Does it work?" :: String)
+        , ":tags" := ("space separated list" :: String)
+        , ":checkSum" := (4077833205 :: Int)
+        , ":noteGuid" := ("Ot0!xywPWG" :: String)
+        , ":noteId" := (1398130088495 :: Int)
+        ]
+    executeNamed
+        conn
+        insertCard
+        [ ":cardId" := (1398130088496 :: Int)
+        , ":noteId" := (1398130088495 :: Int)
+        ]
     execute_ conn analyzeAndIndex
     close conn
