@@ -20,6 +20,8 @@ description:         Please see the README on Github at <https://github.com/iamf
 dependencies:
 - base >= 4.7 && < 5
 - sqlite-simple
+- cryptohash
+- bytestring
 ghc-options:
 - -Werror
 - -Wall

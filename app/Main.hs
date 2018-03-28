@@ -3,6 +3,9 @@
 module Main where
 
 import Control.Applicative (pure)
+import Crypto.Hash.SHA1 (hash)
+import qualified Data.ByteString.Char8 as BS
+import Data.Char (ord)
 import Database.SQLite.Simple
        (NamedParam((:=)), Query, close, execute, executeNamed, execute_,
         open)
@@ -112,6 +115,23 @@ analyzeAndIndex =
   \ CREATE INDEX ix_revlog_cid on revlog (cid);\n\
   \ CREATE INDEX ix_notes_csum on notes (csum);"
 
+getAnkiCheckSum :: String -> Int
+getAnkiCheckSum s
+    --Sha1 hash >>> first 4 bytes >>> as an Int
+ = BS.foldl (\p n -> 256 * p + ord n) 0 (BS.take 4 (hash (BS.pack s)))
+
+getNamedParamTuple ::
+       Int -> (String, String, String, [String]) -> ([NamedParam], [NamedParam])
+getNamedParamTuple ts (front, back, searchValue, tags) =
+    ( [ ":content" := front ++ "\US" ++ back
+      , ":searchValue" := searchValue
+      , ":tags" := foldr (\p n -> p ++ " " ++ n) "" tags
+      , ":checkSum" := getAnkiCheckSum searchValue
+      , ":noteGuid" := show ts
+      , ":noteId" := ts
+      ]
+    , [":cardId" := ts + 1, ":noteId" := ts])
+
 main :: IO ()
 main = do
     conn <- open "test.db"
@@ -121,21 +141,11 @@ main = do
     execute_ conn createCards
     execute_ conn createRevLog
     execute_ conn createGraves
-    executeNamed
-        conn
-        insertNote
-        [ ":content" := ("Does it work?\US'It does!" :: String)
-        , ":searchValue" := ("Does it work?" :: String)
-        , ":tags" := ("space separated list" :: String)
-        , ":checkSum" := (4077833205 :: Int)
-        , ":noteGuid" := ("Ot0!xywPWG" :: String)
-        , ":noteId" := (1398130088495 :: Int)
-        ]
-    executeNamed
-        conn
-        insertCard
-        [ ":cardId" := (1398130088496 :: Int)
-        , ":noteId" := (1398130088495 :: Int)
-        ]
+    let (note, card) =
+            getNamedParamTuple
+                1398130088495
+                ("Does it work?", "It does!", "Does it work?", ["two", "tags"])
+    executeNamed conn insertNote note
+    executeNamed conn insertCard card
     execute_ conn analyzeAndIndex
     close conn
