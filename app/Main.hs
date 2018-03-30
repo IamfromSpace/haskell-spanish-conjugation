@@ -7,8 +7,8 @@ import Crypto.Hash.SHA1 (hash)
 import qualified Data.ByteString.Char8 as BS
 import Data.Char (ord)
 import Database.SQLite.Simple
-       (NamedParam((:=)), Query, close, execute, executeNamed, execute_,
-        open)
+       (NamedParam((:=)), Query, close, executeNamed, execute_, open)
+import Database.SQLite.Simple.Internal (Connection)
 import qualified Linguistics.Parsers as LP
 import qualified Parser as P
 
@@ -120,17 +120,38 @@ getAnkiCheckSum s
     --Sha1 hash >>> first 4 bytes >>> as an Int
  = BS.foldl (\p n -> 256 * p + ord n) 0 (BS.take 4 (hash (BS.pack s)))
 
-getNamedParamTuple ::
-       Int -> (String, String, String, [String]) -> ([NamedParam], [NamedParam])
+type CardData = (String, String, String, [String])
+
+spaceToUnderscore :: Char -> Char
+spaceToUnderscore x =
+    if x == ' '
+        then '_'
+        else x
+
+getNamedParamTuple :: Int -> CardData -> ([NamedParam], [NamedParam])
 getNamedParamTuple ts (front, back, searchValue, tags) =
     ( [ ":content" := front ++ "\US" ++ back
       , ":searchValue" := searchValue
-      , ":tags" := foldr (\p n -> p ++ " " ++ n) "" tags
+      , ":tags" := unwords (fmap (fmap spaceToUnderscore) tags)
       , ":checkSum" := getAnkiCheckSum searchValue
       , ":noteGuid" := show ts
       , ":noteId" := ts
       ]
     , [":cardId" := ts + 1, ":noteId" := ts])
+
+cardDatas :: [CardData]
+cardDatas =
+    [ ("Does it work?", "It does!", "Does it work?", ["two", "tags"])
+    , ("How about 2?", "They do!", "How about 2?", ["two", "cards"])
+    , ("Lets do another!", "Ok!", "Let's do another!", ["so many cards"])
+    ]
+
+insertCards :: Connection -> Int -> [CardData] -> IO ()
+insertCards conn i (h:t) =
+    let (note, card) = getNamedParamTuple i h
+    in executeNamed conn insertNote note *> executeNamed conn insertCard card *>
+       insertCards conn (i + 2) t
+insertCards _ _ [] = pure ()
 
 main :: IO ()
 main = do
@@ -141,11 +162,6 @@ main = do
     execute_ conn createCards
     execute_ conn createRevLog
     execute_ conn createGraves
-    let (note, card) =
-            getNamedParamTuple
-                1398130088495
-                ("Does it work?", "It does!", "Does it work?", ["two", "tags"])
-    executeNamed conn insertNote note
-    executeNamed conn insertCard card
+    insertCards conn 1398130088495 cardDatas
     execute_ conn analyzeAndIndex
     close conn
