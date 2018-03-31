@@ -2,15 +2,20 @@
 
 module Main where
 
-import Control.Applicative (pure)
+import Control.Applicative (liftA2, pure)
 import Crypto.Hash.SHA1 (hash)
 import qualified Data.ByteString.Char8 as BS
 import Data.Char (ord)
 import Database.SQLite.Simple
        (NamedParam((:=)), Query, close, executeNamed, execute_, open)
 import Database.SQLite.Simple.Internal (Connection)
+import Linguistics.Conjugate
+import Linguistics.FullWord
 import qualified Linguistics.Parsers as LP
+import Linguistics.Render
+import Linguistics.Types
 import qualified Parser as P
+import Utils (swapEitherList, withLeft)
 
 createCol :: Query
 createCol =
@@ -139,12 +144,48 @@ getNamedParamTuple ts (front, back, searchValue, tags) =
       ]
     , [":cardId" := ts + 1, ":noteId" := ts])
 
-cardDatas :: [CardData]
-cardDatas =
-    [ ("Does it work?", "It does!", "Does it work?", ["two", "tags"])
-    , ("How about 2?", "They do!", "How about 2?", ["two", "cards"])
-    , ("Lets do another!", "Ok!", "Let's do another!", ["so many cards"])
+verbs :: [SimpleTense -> Either String CardData]
+verbs =
+    [ v True False "avergonzar"
+    , v False True "pedir"
+    , v False False "correr"
+    , v True True "dormir"
     ]
+
+mkCardDatas ::
+       (SimpleTense -> Either String CardData) -> Either String [CardData]
+mkCardDatas fn = swapEitherList (fmap fn allTenses)
+
+cardDatas :: Either String [CardData]
+cardDatas = foldr (liftA2 (++) . mkCardDatas) (Right []) verbs
+
+cong :: Bool -> Bool -> FullWord -> SimpleTense -> Maybe String
+cong diph vR fw st = fmap render (toVerb fw >>= flip (conjugate diph vR) st)
+
+v :: Bool -> Bool -> String -> SimpleTense -> Either String CardData
+v diph vR str st =
+    let renderedParser :: P.Parser String (Maybe String)
+        renderedParser = fmap (\fw -> cong diph vR fw st) LP.wordOnly
+        parsed :: Either String String
+        parsed =
+            fmap fst (P.runParser renderedParser str) >>=
+            withLeft "could not conjugate"
+    in fmap (verbToCardDatas str st) parsed
+
+allTenses :: [SimpleTense]
+allTenses =
+    [ Conditional
+    , Future
+    , Imperfect
+    , Present
+    , Preterite
+    , PresentSubjunctive
+    , ImperfectSubjunctive
+    ] <*>
+    [Yo, Tú, Usted, Nosotros, Ustedes]
+
+verbToCardDatas :: String -> SimpleTense -> String -> CardData
+verbToCardDatas i t c = (i ++ " -- " ++ show t, c, i ++ "-" ++ c, [i, show t])
 
 insertCards :: Connection -> Int -> [CardData] -> IO ()
 insertCards conn i (h:t) =
@@ -154,14 +195,17 @@ insertCards conn i (h:t) =
 insertCards _ _ [] = pure ()
 
 main :: IO ()
-main = do
-    conn <- open "test.db"
-    execute_ conn createCol
-    execute_ conn initCol
-    execute_ conn createNotes
-    execute_ conn createCards
-    execute_ conn createRevLog
-    execute_ conn createGraves
-    insertCards conn 1398130088495 cardDatas
-    execute_ conn analyzeAndIndex
-    close conn
+main =
+    case cardDatas of
+        Left err -> error err
+        Right cDs -> do
+            conn <- open "test.db"
+            execute_ conn createCol
+            execute_ conn initCol
+            execute_ conn createNotes
+            execute_ conn createCards
+            execute_ conn createRevLog
+            execute_ conn createGraves
+            insertCards conn 1398130088495 cDs
+            execute_ conn analyzeAndIndex
+            close conn
