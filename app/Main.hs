@@ -153,11 +153,13 @@ getNamedParamTuple ts (front, back, searchValue, tags) =
     , [":cardId" := ts + 1, ":noteId" := ts])
 
 insertCards :: Connection -> Int -> [CardData] -> IO ()
-insertCards conn i (h:t) =
-    let (note, card) = getNamedParamTuple i h
-    in executeNamed conn insertNote note *> executeNamed conn insertCard card *>
-       insertCards conn (i + 2) t
-insertCards _ _ [] = pure ()
+insertCards conn j =
+    let reducer cd (io, i) =
+            let (note, card) = getNamedParamTuple i cd
+            in ( io *> executeNamed conn insertNote note *>
+                 executeNamed conn insertCard card
+               , i + 2)
+    in fst . foldr reducer (pure (), j)
 
 type VerbConfig = (Bool, Bool)
 
