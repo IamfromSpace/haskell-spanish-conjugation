@@ -279,26 +279,29 @@ verbs =
     , ((True, True), "sentir")
     ]
 
+newDbWithCards :: String -> [CardData] -> IO ()
+newDbWithCards fileName cardDatas = do
+    conn <- open fileName
+    execute_ conn createCol
+    execute_ conn initCol
+    execute_ conn createNotes
+    execute_ conn createCards
+    execute_ conn createRevLog
+    execute_ conn createGraves
+    insertCards conn 1398130088495 cardDatas
+    execute_ conn analyze
+    execute_ conn addSqliteStat
+    execute_ conn addNotesUsnIndex
+    execute_ conn addCardsUsnIndex
+    execute_ conn addRevlogUsnIndex
+    execute_ conn addCardsNidIndex
+    execute_ conn addCardDidQueueDueIndex
+    execute_ conn addRevlogCidIndex
+    execute_ conn addNotesCsumIndex
+    close conn
+
 main :: IO ()
 main =
     case mkCardDatas verbs of
         Left err -> error err
-        Right cardDatas -> do
-            conn <- open "test.db"
-            execute_ conn createCol
-            execute_ conn initCol
-            execute_ conn createNotes
-            execute_ conn createCards
-            execute_ conn createRevLog
-            execute_ conn createGraves
-            insertCards conn 1398130088495 cardDatas
-            execute_ conn analyze
-            execute_ conn addSqliteStat
-            execute_ conn addNotesUsnIndex
-            execute_ conn addCardsUsnIndex
-            execute_ conn addRevlogUsnIndex
-            execute_ conn addCardsNidIndex
-            execute_ conn addCardDidQueueDueIndex
-            execute_ conn addRevlogCidIndex
-            execute_ conn addNotesCsumIndex
-            close conn
+        Right cardDatas -> newDbWithCards "test.db" cardDatas
