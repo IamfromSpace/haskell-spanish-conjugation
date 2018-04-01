@@ -132,7 +132,7 @@ conjugateToCardData :: String -> SimpleTense -> String -> CardData
 conjugateToCardData infinitive tense conjugated =
     ( infinitive ++ " -- " ++ show tense
     , conjugated
-    , infinitive ++ "-" ++ conjugated
+    , infinitive ++ " -- " ++ show tense
     , [infinitive, show tense])
 
 spaceToUnderscore :: Char -> Char
