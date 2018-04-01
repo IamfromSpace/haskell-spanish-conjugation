@@ -1,10 +1,12 @@
+{-# LANGUAGE MultiParamTypeClasses, FlexibleInstances #-}
+
 module Utils
     ( ($>)
     , liftA4
     , swapTuple
     , mHead
     , withLeft
-    , swapEitherList
+    , swap
     ) where
 
 ($>) :: Functor f => f a -> b -> f b
@@ -33,16 +35,25 @@ withLeft l m =
         Just x -> Right x
         Nothing -> Left l
 
-swapEitherList :: Monoid a => [Either a b] -> Either a [b]
-swapEitherList =
-    let go [] built = built
-        go (h:t) built =
-            case h of
-                Left x ->
-                    go
-                        t
-                        (case built of
-                             Left y -> Left (x `mappend` y)
-                             Right _ -> Left x)
-                Right x -> go t (fmap ((:) x) built)
-    in flip go (Right [])
+class Swap a b c where
+    swap :: a (b c) -> b (a c)
+
+instance Swap ((,) a) Maybe b where
+    swap (x, my) = fmap ((,) x) my
+
+instance Swap ((,) a) (Either b) c where
+    swap (x, ey) = fmap ((,) x) ey
+
+instance Monoid a => Swap [] (Either a) b where
+    swap =
+        let go [] built = built
+            go (h:t) built =
+                case h of
+                    Left x ->
+                        go
+                            t
+                            (case built of
+                                 Left y -> Left (x `mappend` y)
+                                 Right _ -> Left x)
+                    Right x -> go t (fmap ((:) x) built)
+        in flip go (Right [])

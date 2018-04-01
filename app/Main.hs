@@ -3,6 +3,7 @@
 module Main where
 
 import Control.Applicative (liftA2, pure)
+import Control.Monad ((>=>))
 import Crypto.Hash.SHA1 (hash)
 import qualified Data.ByteString.Char8 as BS
 import Data.Char (ord)
@@ -15,7 +16,7 @@ import qualified Linguistics.Parsers as LP
 import Linguistics.Render
 import Linguistics.Types
 import qualified Parser as P
-import Utils (swapEitherList, withLeft)
+import Utils (swap, withLeft)
 
 createCol :: Query
 createCol =
@@ -127,6 +128,13 @@ getAnkiCheckSum s
 
 type CardData = (String, String, String, [String])
 
+conjugateToCardData :: String -> SimpleTense -> String -> CardData
+conjugateToCardData infinitive tense conjugated =
+    ( infinitive ++ " -- " ++ show tense
+    , conjugated
+    , infinitive ++ "-" ++ conjugated
+    , [infinitive, show tense])
+
 spaceToUnderscore :: Char -> Char
 spaceToUnderscore x =
     if x == ' '
@@ -144,33 +152,35 @@ getNamedParamTuple ts (front, back, searchValue, tags) =
       ]
     , [":cardId" := ts + 1, ":noteId" := ts])
 
-verbs :: [SimpleTense -> Either String CardData]
-verbs =
-    [ v True False "avergonzar"
-    , v False True "pedir"
-    , v False False "correr"
-    , v True True "dormir"
-    ]
+insertCards :: Connection -> Int -> [CardData] -> IO ()
+insertCards conn i (h:t) =
+    let (note, card) = getNamedParamTuple i h
+    in executeNamed conn insertNote note *> executeNamed conn insertCard card *>
+       insertCards conn (i + 2) t
+insertCards _ _ [] = pure ()
 
-mkCardDatas ::
-       (SimpleTense -> Either String CardData) -> Either String [CardData]
-mkCardDatas fn = swapEitherList (fmap fn allTenses)
+type VerbConfig = (Bool, Bool)
 
-cardDatas :: Either String [CardData]
-cardDatas = foldr (liftA2 (++) . mkCardDatas) (Right []) verbs
+--This should just really be the definition of toVerb
+toVerb' :: FullWord -> Either String Verb
+toVerb' = fmap (withLeft "word is not a verb!") toVerb
 
-cong :: Bool -> Bool -> FullWord -> SimpleTense -> Maybe String
-cong diph vR fw st = fmap render (toVerb fw >>= flip (conjugate diph vR) st)
+parseVerb :: String -> Either String Verb
+parseVerb = (fmap fst . P.runParser LP.wordOnly) >=> toVerb'
 
-v :: Bool -> Bool -> String -> SimpleTense -> Either String CardData
-v diph vR str st =
-    let renderedParser :: P.Parser String (Maybe String)
-        renderedParser = fmap (\fw -> cong diph vR fw st) LP.wordOnly
-        parsed :: Either String String
-        parsed =
-            fmap fst (P.runParser renderedParser str) >>=
-            withLeft "could not conjugate"
-    in fmap (verbToCardDatas str st) parsed
+--This should just really be the definition of conjugate
+conjugate' :: (VerbConfig, Verb) -> SimpleTense -> Either String FullWord
+conjugate' =
+    fmap (fmap (withLeft "could not conjugate")) (uncurry (uncurry conjugate))
+
+conjugate'' :: (VerbConfig, String) -> SimpleTense -> Either String FullWord
+conjugate'' fwv st = swap (fmap parseVerb fwv) >>= flip conjugate' st
+
+-- Here we take advantage of the fact that ((->) a b) is a functor to fmap
+-- the final argument (which is an Either, so also needs fmap'ing)
+conjugate''' :: (VerbConfig, String) -> SimpleTense -> Either String CardData
+conjugate''' (vc, str) st =
+    fmap (conjugateToCardData str st . render) (conjugate'' (vc, str) st)
 
 allTenses :: [SimpleTense]
 allTenses =
@@ -184,21 +194,26 @@ allTenses =
     ] <*>
     [Yo, Tú, Usted, Nosotros, Ustedes]
 
-verbToCardDatas :: String -> SimpleTense -> String -> CardData
-verbToCardDatas i t c = (i ++ " -- " ++ show t, c, i ++ "-" ++ c, [i, show t])
+configuredVerbToCardDatas :: (VerbConfig, String) -> Either String [CardData]
+configuredVerbToCardDatas stringVerb =
+    swap (fmap (conjugate''' stringVerb) allTenses)
 
-insertCards :: Connection -> Int -> [CardData] -> IO ()
-insertCards conn i (h:t) =
-    let (note, card) = getNamedParamTuple i h
-    in executeNamed conn insertNote note *> executeNamed conn insertCard card *>
-       insertCards conn (i + 2) t
-insertCards _ _ [] = pure ()
+mkCardDatas :: [(VerbConfig, String)] -> Either String [CardData]
+mkCardDatas = foldr (liftA2 (++) . configuredVerbToCardDatas) (Right [])
+
+verbs :: [(VerbConfig, String)]
+verbs =
+    [ ((True, False), "avergonzar")
+    , ((False, True), "pedir")
+    , ((False, False), "correr")
+    , ((True, True), "dormir")
+    ]
 
 main :: IO ()
 main =
-    case cardDatas of
+    case mkCardDatas verbs of
         Left err -> error err
-        Right cDs -> do
+        Right cardDatas -> do
             conn <- open "test.db"
             execute_ conn createCol
             execute_ conn initCol
@@ -206,6 +221,6 @@ main =
             execute_ conn createCards
             execute_ conn createRevLog
             execute_ conn createGraves
-            insertCards conn 1398130088495 cDs
+            insertCards conn 1398130088495 cardDatas
             execute_ conn analyzeAndIndex
             close conn
