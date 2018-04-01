@@ -178,8 +178,6 @@ conjugate' =
 conjugate'' :: (VerbConfig, String) -> SimpleTense -> Either String FullWord
 conjugate'' fwv st = swap (fmap parseVerb fwv) >>= flip conjugate' st
 
--- Here we take advantage of the fact that ((->) a b) is a functor to fmap
--- the final argument (which is an Either, so also needs fmap'ing)
 conjugate''' :: (VerbConfig, String) -> SimpleTense -> Either String CardData
 conjugate''' (vc, str) st =
     fmap (conjugateToCardData str st . render) (conjugate'' (vc, str) st)
