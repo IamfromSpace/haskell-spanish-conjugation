@@ -109,17 +109,33 @@ insertCard :: Query
 insertCard =
     "INSERT INTO cards VALUES(:cardId,:noteId,1398130078204,0,:cardId,-1,0,0,:noteId,0,0,0,0,0,0,0,0,'');"
 
-analyzeAndIndex :: Query
-analyzeAndIndex =
-    "ANALYZE sqlite_master;\n\
-  \ INSERT INTO \"sqlite_stat1\" VALUES('col',NULL,'1');\n\
-  \ CREATE INDEX ix_notes_usn on notes (usn);\n\
-  \ CREATE INDEX ix_cards_usn on cards (usn);\n\
-  \ CREATE INDEX ix_revlog_usn on revlog (usn);\n\
-  \ CREATE INDEX ix_cards_nid on cards (nid);\n\
-  \ CREATE INDEX ix_cards_sched on cards (did, queue, due);\n\
-  \ CREATE INDEX ix_revlog_cid on revlog (cid);\n\
-  \ CREATE INDEX ix_notes_csum on notes (csum);"
+analyze :: Query
+analyze = "ANALYZE sqlite_master;"
+
+addSqliteStat :: Query
+addSqliteStat = "INSERT INTO \"sqlite_stat1\" VALUES('col',NULL,'1');"
+
+addNotesUsnIndex :: Query
+addNotesUsnIndex = "CREATE INDEX ix_notes_usn on notes (usn);"
+
+addCardsUsnIndex :: Query
+addCardsUsnIndex = "CREATE INDEX ix_cards_usn on cards (usn);"
+
+addRevlogUsnIndex :: Query
+addRevlogUsnIndex = "CREATE INDEX ix_revlog_usn on revlog (usn);"
+
+addCardsNidIndex :: Query
+addCardsNidIndex = "CREATE INDEX ix_cards_nid on cards (nid);"
+
+addCardDidQueueDueIndex :: Query
+addCardDidQueueDueIndex =
+    "CREATE INDEX ix_cards_sched on cards (did, queue, due);"
+
+addRevlogCidIndex :: Query
+addRevlogCidIndex = "CREATE INDEX ix_revlog_cid on revlog (cid);"
+
+addNotesCsumIndex :: Query
+addNotesCsumIndex = "CREATE INDEX ix_notes_csum on notes (csum);"
 
 getAnkiCheckSum :: String -> Int
 getAnkiCheckSum s
@@ -276,5 +292,13 @@ main =
             execute_ conn createRevLog
             execute_ conn createGraves
             insertCards conn 1398130088495 cardDatas
-            execute_ conn analyzeAndIndex
+            execute_ conn analyze
+            execute_ conn addSqliteStat
+            execute_ conn addNotesUsnIndex
+            execute_ conn addCardsUsnIndex
+            execute_ conn addRevlogUsnIndex
+            execute_ conn addCardsNidIndex
+            execute_ conn addCardDidQueueDueIndex
+            execute_ conn addRevlogCidIndex
+            execute_ conn addNotesCsumIndex
             close conn
