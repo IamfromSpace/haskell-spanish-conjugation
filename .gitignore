@@ -2,3 +2,5 @@
 *.cabal
 *.swp
 *~
+out/collection.anki2
+out.apkg
