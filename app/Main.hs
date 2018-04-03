@@ -16,39 +16,32 @@ import Linguistics.Types
 import qualified Parser as P
 import Utils (swap, withLeft)
 
--- Seems to indicate I need a different strategy for SimpleTense
--- should possibly be Tense/Subject totally separate and then
--- Conjugate which is pair?
--- This really should be a Maybe, but I'm lazy, which helps show that
--- my data types aren't correct... The ability to fail should be avoided if possible.
-tenseToStrTuple :: SimpleTense -> (String, String, String)
-tenseToStrTuple (Conditional s) =
-    ("conditional", toLower <$> show s, "hoy si...")
-tenseToStrTuple (Future s) = ("future", toLower <$> show s, "mañana")
-tenseToStrTuple (Imperfect s) =
-    ("imperfect", toLower <$> show s, "hace varios años")
-tenseToStrTuple (Present s) = ("present", toLower <$> show s, "cada día")
-tenseToStrTuple (Preterite s) = ("preterite", toLower <$> show s, "ayer")
-tenseToStrTuple (PresentSubjunctive s) =
-    ("present_subjunctive", toLower <$> show s, "quiero que...")
-tenseToStrTuple (ImperfectSubjunctive s) =
-    ("imperfect_subjunctive", toLower <$> show s, "yo quería que...")
-tenseToStrTuple x = (show x, "", "")
+describe :: SubjectSensativeTense -> String
+describe Conditional = "hoy si..."
+describe Future = "mañana"
+describe Imperfect = "hace varios años"
+describe Present = "cada día"
+describe Preterite = "ayer"
+describe PresentSubjunctive = "quiero que..."
+describe ImperfectSubjunctive = "yo quería que..."
 
-conjugateToCardData :: String -> SimpleTense -> String -> CardData
-conjugateToCardData infinitive tense conjugated =
-    let (time, subject, tense_desc) = tenseToStrTuple tense
+conjugateToCardData ::
+       String -> (SubjectSensativeTense, Subject) -> String -> CardData
+conjugateToCardData infinitive (t, s) conjugated =
+    let tenseDesc = describe t
+        tense = fmap toLower (show t)
+        subject = fmap toLower (show s)
     in ( "<div style=\"font-size:36px; font-weight:bold\">" ++
          infinitive ++
          "</div><img src=\"" ++
-         time ++
+         tense ++
          ".png\" /><img src=\"" ++
          subject ++
          ".png\" /><div style=\"font-size:12px; font-style:italic\">(" ++
-         tense_desc ++ ", " ++ subject ++ ")</div>"
+         tenseDesc ++ ", " ++ subject ++ ")</div>"
        , subject ++ " " ++ conjugated
        , infinitive ++ " -- " ++ show tense
-       , [infinitive, time, subject, "simple"])
+       , [infinitive, tense, subject, "simple"])
 
 type VerbConfig = (Bool, Bool)
 
@@ -60,28 +53,39 @@ parseVerb :: String -> Either String Verb
 parseVerb = (fmap fst . P.runParser LP.wordOnly) >=> toVerb'
 
 --This should just really be the definition of conjugate
-conjugate' :: (VerbConfig, Verb) -> SimpleTense -> Either String FullWord
+conjugate' ::
+       (VerbConfig, Verb)
+    -> (SubjectSensativeTense, Subject)
+    -> Either String FullWord
 conjugate' =
     fmap (fmap (withLeft "could not conjugate")) (uncurry (uncurry conjugate))
 
-conjugate'' :: (VerbConfig, String) -> SimpleTense -> Either String FullWord
+conjugate'' ::
+       (VerbConfig, String)
+    -> (SubjectSensativeTense, Subject)
+    -> Either String FullWord
 conjugate'' fwv st = swap (fmap parseVerb fwv) >>= flip conjugate' st
 
-conjugate''' :: (VerbConfig, String) -> SimpleTense -> Either String CardData
+conjugate''' ::
+       (VerbConfig, String)
+    -> (SubjectSensativeTense, Subject)
+    -> Either String CardData
 conjugate''' (vc, str) st =
     fmap (conjugateToCardData str st . render) (conjugate'' (vc, str) st)
 
-allTenses :: [SimpleTense]
+allTenses :: [(SubjectSensativeTense, Subject)]
 allTenses =
-    [ Conditional
-    , Future
-    , Imperfect
-    , Present
-    , Preterite
-    , PresentSubjunctive
-    , ImperfectSubjunctive
-    ] <*>
-    [Yo, Tú, Usted, Nosotros, Ustedes]
+    liftA2
+        (,)
+        [ Conditional
+        , Future
+        , Imperfect
+        , Present
+        , Preterite
+        , PresentSubjunctive
+        , ImperfectSubjunctive
+        ]
+        [Yo, Tú, Usted, Nosotros, Ustedes]
 
 configuredVerbToCardDatas :: (VerbConfig, String) -> Either String [CardData]
 configuredVerbToCardDatas stringVerb =

@@ -17,7 +17,8 @@ module Linguistics.Types
     , Ending
     , Intermediate
     , Subject(..)
-    , SimpleTense(..)
+    , SubjectlessTense(..)
+    , SubjectSensativeTense(..)
     ) where
 
 data HighVowel
@@ -114,17 +115,19 @@ data Subject
     | Ustedes
     deriving (Show, Eq)
 
--- To Consider, should Imperfect/Present/Future also accept a mood (Indicative/Subjunctive)?
--- That makes it nested rather than flat, but is maybe more accurate/detailed
-data SimpleTense
+-- TODO: Gotta be a better name than that...
+data SubjectlessTense
     = Infinitive
     | PastParticiple
     | PresentParticiple
-    | Conditional Subject
-    | Future Subject
-    | Imperfect Subject
-    | Present Subject
-    | Preterite Subject
-    | PresentSubjunctive Subject
-    | ImperfectSubjunctive Subject
+    deriving (Show, Eq)
+
+data SubjectSensativeTense
+    = Conditional
+    | Future
+    | Imperfect
+    | Present
+    | Preterite
+    | PresentSubjunctive
+    | ImperfectSubjunctive
     deriving (Show, Eq)
