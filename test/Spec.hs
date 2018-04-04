@@ -157,11 +157,11 @@ main =
                             , PresentSubjunctive
                             , ImperfectSubjunctive
                             ]
-                            [Yo, Tú, Usted, Nosotros, Ustedes]
+                            [Yo, Tú, Usted, Él, Nosotros, Ustedes, Ellos]
                     allEndings = liftA2 getEnding [AR, ER, IR] allTenses
                     -- Evaluation of the list must be force, done here by checking for a coda
                 in length (filter (\(_, _, x) -> isJust x) allEndings) `shouldBe`
-                   60
+                   81
                         --[Infinitive, PastParticiple, PresentParticiple] ++
             it "does not throw for subject insensative ending" $
                 let allEndings =

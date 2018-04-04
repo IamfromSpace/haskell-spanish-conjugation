@@ -111,8 +111,10 @@ data Subject
     = Yo
     | Tú
     | Usted
+    | Él
     | Nosotros
     | Ustedes
+    | Ellos
     deriving (Show, Eq)
 
 -- TODO: Gotta be a better name than that...

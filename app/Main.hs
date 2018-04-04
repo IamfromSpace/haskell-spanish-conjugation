@@ -85,7 +85,7 @@ allTenses =
         , PresentSubjunctive
         , ImperfectSubjunctive
         ]
-        [Yo, Tú, Usted, Nosotros, Ustedes]
+        [Yo, Tú, Usted, Él, Nosotros, Ustedes, Ellos]
 
 configuredVerbToCardDatas :: (VerbConfig, String) -> Either String [CardData]
 configuredVerbToCardDatas stringVerb =

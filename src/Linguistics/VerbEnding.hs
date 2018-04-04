@@ -30,6 +30,8 @@ class Show a =>
     getEnding' :: VerbType -> a -> String
 
 instance HasVerbEnding (SubjectSensativeTense, Subject) where
+    getEnding' x (y, Él) = getEnding' x (y, Usted)
+    getEnding' x (y, Ellos) = getEnding' x (y, Ustedes)
     getEnding' AR (Imperfect, Tú) = "abas"
     getEnding' AR (Imperfect, Nosotros) = "ábamos"
     getEnding' AR (Imperfect, Ustedes) = "aban"
