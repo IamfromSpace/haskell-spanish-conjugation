@@ -140,7 +140,7 @@ main =
                 "should give back the same result if parsed then rendered"
                 (\x ->
                      case runParser wordOnly x of
-                         Right (s, "") -> render s == x
+                         Right ("", s) -> render s == x
                          _ -> True)
         describe "getEnding" $ do
             it "does not throw for subject sensative ending" $
@@ -184,13 +184,13 @@ v :: HasVerbEnding a => Bool -> Bool -> String -> VerbHelper a
 v diph vR str st =
     let renderedParser = fmap (\fw -> cong diph vR fw st) wordOnly
     in case runParser renderedParser str of
-           Right (Just rendered, "") -> rendered
-           Right (Just _, _:_)
+           Right ("", Just rendered) -> rendered
+           Right (_:_, Just _)
                -- This case really should be impossible by using `wordOnly`
             ->
                error
                    "Test inputs are invalid!  Verb string was not fully parsed!"
-           Right (Nothing, _) ->
+           Right (_, Nothing) ->
                error
                    "Test inputs are invalid!  Verb had no valid conjugation (did not end with ar/er/ir, could not diphthongize, etc)!"
            Left _ ->

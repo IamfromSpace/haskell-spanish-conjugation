@@ -3,34 +3,26 @@ module Parser
     ) where
 
 import Control.Applicative
-import qualified Control.Arrow as Arrow
 
--- If we swap o/i in the tuple and constrain Monoid i => i
--- then this is just the composition (h (g (f a))) of three Applicatives
---   (->) a  - Reader or (a -> ...)
---   Maybe a
---   Monoid b => (b, a)
--- However, only Maybe appears to be an Alternative,
--- So that needs a custom definition
--- It would be nice to parameterize the error type, but
--- then it's annoying to make add a separator
+-- Note that while this seems like this could just be
+-- the Compose of three functors, that reaaaaally doesn't work.
+-- The instances are far to specific for defaults to work,
+-- and then ((->) a) and (Either a) are not Alternatives
+-- which causes a whole bunch of problems.
 newtype Parser i o = Parser
-    { runParser :: i -> Either String (o, i)
+    { runParser :: i -> Either String (i, o)
     }
 
 instance Functor (Parser i) where
-    fmap f p = Parser $ \input -> fmap (Arrow.first f) (runParser p input)
+    fmap f = Parser . fmap (fmap (fmap f)) . runParser
 
 instance Applicative (Parser i) where
-    pure x = Parser $ \a -> Right (x, a)
+    pure x = Parser $ \a -> Right (a, x)
     pf <*> px =
         Parser $ \input ->
             case runParser pf input of
                 Left e -> Left e
-                Right (f, rest) ->
-                    case runParser px rest of
-                        Left e -> Left e
-                        Right (x, o) -> Right (f x, o)
+                Right (rest, f) -> fmap (fmap f) (runParser px rest)
 
 instance Monoid i => Alternative (Parser i) where
     empty = Parser (const (Left mempty))

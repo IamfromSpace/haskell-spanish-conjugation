@@ -51,7 +51,7 @@ toVerb' :: FullWord -> Either String Verb
 toVerb' = withLeft "word is not a verb!" . toVerb
 
 parseVerb :: String -> Either String Verb
-parseVerb = (fmap fst . P.runParser LP.wordOnly) >=> toVerb'
+parseVerb = (fmap snd . P.runParser LP.wordOnly) >=> toVerb'
 
 --This should just really be the definition of conjugate
 conjugate' ::

@@ -22,7 +22,7 @@ class Show a =>
     -- It just doesn't seem like a practical solution.
     getEnding vt a =
         case runParser endingOnly (getEnding' vt a) of
-            Right (z, _) -> z
+            Right (_, z) -> z
             _ ->
                 error
                     ("An ending was unparsable! For " ++
