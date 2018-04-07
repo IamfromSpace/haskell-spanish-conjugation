@@ -31,12 +31,13 @@ conjugateToCardData infinitive (t, s) conjugated =
     let tenseDesc = describe t
         tense = fmap toLower (show t)
         subject = fmap toLower (show s)
-    in ( "<div style=\"font-size:36px; font-weight:bold\">" ++
+    in ( "<img src=\"" ++
+         subject ++
+         ".png\" />" ++
+         "<div style=\"font-size:36px; font-weight:bold\">" ++
          infinitive ++
          "</div><img src=\"" ++
          tense ++
-         ".png\" /><img src=\"" ++
-         subject ++
          ".png\" /><div style=\"font-size:12px; font-style:italic\">(" ++
          tenseDesc ++ ", " ++ subject ++ ")</div>"
        , subject ++ " " ++ conjugated
