@@ -146,8 +146,6 @@ preventUirNonIDiphthongization x = x
 -- Probably look back on this and think this is silly...
 -- Use of _3 and the raw construction of a Core here
 -- Says I'm still far too coupled to the data structures
--- Should this return a maybe?
--- If it _should_ break but there's no diphthong to break so it _can't_ that seems reasonable
 breakDiphthong :: Intermediate -> Maybe Intermediate
 breakDiphthong intermediate =
     if not (hasExplicitStress intermediate) &&
@@ -158,24 +156,22 @@ breakDiphthong intermediate =
                      (over _3 ((:) ((True, (Nothing, Left x)), Nothing)) .
                       set (_jointCore . _semiVowelLeft) Nothing)
                          intermediate
-                 Nothing ->
-                     let penultimateCore = preview _penultimateCore intermediate
-                         newPenpenultimateCore =
-                             fmap (set _semiVowelRight Nothing) penultimateCore
-                         makeHighVowelCore x = (True, (Nothing, Left x))
-                         newPenultimateCore =
-                             penultimateCore >>=
-                             (fmap makeHighVowelCore .
-                              preview (_semiVowelRight . _Just))
-                         verySpecificThing ::
-                                Core -> Core -> Intermediate -> Intermediate
-                         verySpecificThing h0 h1 =
-                             over (_3 . _tail) ((:) (h1, Nothing)) .
-                             set (_3 . _head . _1) h0
-                     in fmap
-                            (\f -> f intermediate)
-                            (liftA2
-                                 verySpecificThing
-                                 newPenultimateCore
-                                 newPenpenultimateCore)
+                 Nothing -> do
+                     penultimateCore <- preview _penultimateCore intermediate
+                     -- The current penultimate core without the semivowel left
+                     let newPenpenultimateCore =
+                             set _semiVowelRight Nothing penultimateCore
+                     -- which will be inserted as a new core+cluster after head
+                     let insertNew =
+                             over
+                                 (_3 . _tail)
+                                 ((:) (newPenpenultimateCore, Nothing))
+                     -- The semiVowelRight gets upgraded and overwrites the current head
+                     semiVowelToUpgrade <-
+                         preview (_semiVowelRight . _Just) penultimateCore
+                     let newPenultimateCore =
+                             (True, (Nothing, Left semiVowelToUpgrade))
+                     let updateHead = set (_3 . _head . _1) newPenultimateCore
+                     -- Perform the updates and wrap them back up
+                     return ((insertNew . updateHead) intermediate)
         else Just intermediate
