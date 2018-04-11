@@ -12,29 +12,36 @@ import Linguistics.VowelRaising
 -- TODO: this function struture of `Bool -> Bool -> a -> b -> c` is really troublesome to map
 -- And it's only going to get worse as verbs get more properties (diphthong-breaking,
 -- custom preterite/subjunctives, etc)
-conjugate :: HasVerbEnding a => Bool -> Bool -> Verb -> a -> Maybe FullWord
-conjugate diphthongizing vowelRaising verb@(vt, _, _, _) tense =
+conjugate ::
+       HasVerbEnding a => (Bool, Bool, Bool) -> Verb -> a -> Maybe FullWord
+conjugate (diphthongBreaking, diphthongizing, vowelRaising) verb@(vt, _, _, _) tense =
     let ending = getEnding vt tense
         intermediate =
             preventUirNonIDiphthongization (toIntermediate verb ending)
         mIntermediate =
-            if diphthongizing && couldDiphthongize intermediate
-                then diphthongize intermediate
+            if diphthongBreaking
+                then breakDiphthong intermediate
                 else return intermediate
         mIntermediate' =
-            if vowelRaising && couldVowelRaise diphthongizing intermediate
-                then mIntermediate >>= raiseVowel
-                else mIntermediate
+            mIntermediate >>=
+            (\i ->
+                 if diphthongizing && couldDiphthongize i
+                     then diphthongize i
+                     else return i)
         mIntermediate'' =
+            if vowelRaising && couldVowelRaise diphthongizing intermediate
+                then mIntermediate' >>= raiseVowel
+                else mIntermediate'
+        mIntermediate''' =
             fmap
                 (preventStressedJointDiphthongization .
                  preventAmbiguiousJointDiphthongization)
-                mIntermediate'
+                mIntermediate''
         fullWord =
             fmap
                 (dropSemiVowelIAfterÑ .
                  dropSemiVowelIAfterLl .
                  dropMonosyllabicAccent .
                  preventStartingSemiVowel . fromIntermediate)
-                mIntermediate''
+                mIntermediate'''
     in fullWord

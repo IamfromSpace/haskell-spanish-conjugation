@@ -125,6 +125,21 @@ main =
                 it "sienta" $
                     sentir (PresentSubjunctive, Usted) `shouldBe` "sienta"
                 it "siente" $ sentir (Present, Usted) `shouldBe` "siente"
+            describe "diphthong breaking" $ do
+                it "should break enviar on present yo" $
+                    enviar (Present, Yo) `shouldBe` "envío"
+                it "should not break enviar on preterite tú" $
+                    enviar (Preterite, Tú) `shouldBe` "enviaste"
+                it
+                    "should not break enviar on explicit stress (preterite usted)" $
+                    enviar (Preterite, Usted) `shouldBe` "envió"
+                it "should break aislar on present yo" $
+                    aislar (Present, Yo) `shouldBe` "aíslo"
+                it "should break aunar on present yo" $
+                    aunar (Present, Yo) `shouldBe` "aúno"
+                it "should break descafeinar on present yo" $
+                    descafeinar (Present, Yo) `shouldBe` "descafeíno"
+                -- TODO: Rehusar (once 'h's are parsed properly)
             describe "misc" $ do
                 it "should not start with a semivowel i" $
                     oler (Present, Yo) `shouldBe` "huelo"
@@ -176,13 +191,13 @@ main =
 type VerbHelper a = a -> String
 
 -- TODO: these are probably _close_ to being useful lib functions
-cong :: HasVerbEnding a => Bool -> Bool -> FullWord -> a -> Maybe String
-cong diph vR fw st = fmap render (toVerb fw >>= flip (conjugate diph vR) st)
+cong :: HasVerbEnding a => (Bool, Bool, Bool) -> FullWord -> a -> Maybe String
+cong vConf fw st = fmap render (toVerb fw >>= flip (conjugate vConf) st)
 
 -- This is not total, but that's actually perfect for our tests
-v :: HasVerbEnding a => Bool -> Bool -> String -> VerbHelper a
-v diph vR str st =
-    let renderedParser = fmap (\fw -> cong diph vR fw st) wordOnly
+v :: HasVerbEnding a => (Bool, Bool, Bool) -> String -> VerbHelper a
+v vConf str st =
+    let renderedParser = fmap (\fw -> cong vConf fw st) wordOnly
     in case runParser renderedParser str of
            Right ("", Just rendered) -> rendered
            Right (_:_, Just _)
@@ -197,85 +212,97 @@ v diph vR str st =
                error "Test inputs are invalid!  Verb string was not parseable!"
 
 tocar :: HasVerbEnding a => VerbHelper a
-tocar = v False False "tocar"
+tocar = v (False, False, False) "tocar"
 
 gozar :: HasVerbEnding a => VerbHelper a
-gozar = v False False "gozar"
+gozar = v (False, False, False) "gozar"
 
 averiguar :: HasVerbEnding a => VerbHelper a
-averiguar = v False False "averiguar"
+averiguar = v (False, False, False) "averiguar"
 
 delinquir :: HasVerbEnding a => VerbHelper a
-delinquir = v False False "delinquir"
+delinquir = v (False, False, False) "delinquir"
 
 vencer :: HasVerbEnding a => VerbHelper a
-vencer = v False False "vencer"
+vencer = v (False, False, False) "vencer"
 
 proteger :: HasVerbEnding a => VerbHelper a
-proteger = v False False "proteger"
+proteger = v (False, False, False) "proteger"
 
 distinguir :: HasVerbEnding a => VerbHelper a
-distinguir = v False False "distinguir"
+distinguir = v (False, False, False) "distinguir"
 
 construir :: HasVerbEnding a => VerbHelper a
-construir = v False False "construir"
+construir = v (False, False, False) "construir"
 
 argüir :: HasVerbEnding a => VerbHelper a
-argüir = v False False "argüir"
+argüir = v (False, False, False) "argüir"
 
 hablar :: HasVerbEnding a => VerbHelper a
-hablar = v False False "hablar"
+hablar = v (False, False, False) "hablar"
 
 correr :: HasVerbEnding a => VerbHelper a
-correr = v False False "correr"
+correr = v (False, False, False) "correr"
 
 caer :: HasVerbEnding a => VerbHelper a
-caer = v False False "caer"
+caer = v (False, False, False) "caer"
 
 leer :: HasVerbEnding a => VerbHelper a
-leer = v False False "leer"
+leer = v (False, False, False) "leer"
 
 oír :: HasVerbEnding a => VerbHelper a
-oír = v False False "oír"
+oír = v (False, False, False) "oír"
 
 liar :: HasVerbEnding a => VerbHelper a
-liar = v False False "liar"
+liar = v (False, False, False) "liar"
 
 ver :: HasVerbEnding a => VerbHelper a
-ver = v False False "ver"
+ver = v (False, False, False) "ver"
 
 bullir :: HasVerbEnding a => VerbHelper a
-bullir = v False False "bullir"
+bullir = v (False, False, False) "bullir"
 
 tañer :: HasVerbEnding a => VerbHelper a
-tañer = v False False "tañer"
+tañer = v (False, False, False) "tañer"
 
 pensar :: HasVerbEnding a => VerbHelper a
-pensar = v True False "pensar"
+pensar = v (False, True, False) "pensar"
 
 contar :: HasVerbEnding a => VerbHelper a
-contar = v True False "contar"
+contar = v (False, True, False) "contar"
 
 adquirir :: HasVerbEnding a => VerbHelper a
-adquirir = v True False "adquirir"
+adquirir = v (False, True, False) "adquirir"
 
 jugar :: HasVerbEnding a => VerbHelper a
-jugar = v True False "jugar"
+jugar = v (False, True, False) "jugar"
 
 oler :: HasVerbEnding a => VerbHelper a
-oler = v True False "oler"
+oler = v (False, True, False) "oler"
 
 errar :: HasVerbEnding a => VerbHelper a
-errar = v True False "errar"
+errar = v (False, True, False) "errar"
 
 avergonzar :: HasVerbEnding a => VerbHelper a
-avergonzar = v True False "avergonzar"
+avergonzar = v (False, True, False) "avergonzar"
 
 pedir :: HasVerbEnding a => VerbHelper a
-pedir = v False True "pedir"
+pedir = v (False, False, True) "pedir"
 
 dormir :: HasVerbEnding a => VerbHelper a
-dormir = v True True "dormir"
+dormir = v (False, True, True) "dormir"
 
 sentir :: HasVerbEnding a => VerbHelper a
-sentir = v True True "sentir"
+sentir = v (False, True, True) "sentir"
+
+enviar :: HasVerbEnding a => VerbHelper a
+enviar = v (True, False, False) "enviar"
+
+aislar :: HasVerbEnding a => VerbHelper a
+aislar = v (True, False, False) "aislar"
+
+aunar :: HasVerbEnding a => VerbHelper a
+aunar = v (True, False, False) "aunar"
+
+descafeinar :: HasVerbEnding a => VerbHelper a
+descafeinar = v (True, False, False) "descafeinar"

@@ -1,14 +1,18 @@
 module Linguistics.Intermediate
     ( toIntermediate
     , fromIntermediate
+    , _jointCore
+    , _penultimateCore
     , couldDiphthongize
     , couldVowelRaise
     , preventStressedJointDiphthongization
     , preventAmbiguiousJointDiphthongization
     , preventUirNonIDiphthongization
+    , breakDiphthong
     ) where
 
 import Control.Applicative
+import Control.Lens
 import Data.Maybe (fromMaybe)
 import qualified Data.Maybe as Maybe
 import Linguistics.Positional (startsWith)
@@ -51,6 +55,12 @@ fromIntermediate :: Intermediate -> FullWord
 fromIntermediate (_, mo, stemList, (core, endingList, coda)) =
     let (c, slist) = joinStemList core stemList
     in (mo, c, slist ++ endingList, coda)
+
+_jointCore :: Lens' Intermediate Core
+_jointCore = _4 . _1
+
+_penultimateCore :: Traversal' Intermediate Core
+_penultimateCore = _3 . _head . _1
 
 getImplicitStressJointRelativeOffset :: Intermediate -> Int
 getImplicitStressJointRelativeOffset (_, _, _, (_, e, maybeCoda)) =
@@ -131,3 +141,41 @@ preventUirNonIDiphthongization intermediate@(vt@IR, mOnset, iss, ((isAccented, (
               iss
             , ((isAccented, (Nothing, v)), a, b))
 preventUirNonIDiphthongization x = x
+
+-- Still, uh, getting the hang of lenses here.
+-- Probably look back on this and think this is silly...
+-- Use of _3 and the raw construction of a Core here
+-- Says I'm still far too coupled to the data structures
+-- Should this return a maybe?
+-- If it _should_ break but there's no diphthong to break so it _can't_ that seems reasonable
+breakDiphthong :: Intermediate -> Maybe Intermediate
+breakDiphthong intermediate =
+    if not (hasExplicitStress intermediate) &&
+       getImplicitStressJointRelativeOffset intermediate == -1
+        then case view (_jointCore . _semiVowelLeft) intermediate of
+                 Just x ->
+                     Just $
+                     (over _3 ((:) ((True, (Nothing, Left x)), Nothing)) .
+                      set (_jointCore . _semiVowelLeft) Nothing)
+                         intermediate
+                 Nothing ->
+                     let penultimateCore = preview _penultimateCore intermediate
+                         newPenpenultimateCore =
+                             fmap (set _semiVowelRight Nothing) penultimateCore
+                         makeHighVowelCore x = (True, (Nothing, Left x))
+                         newPenultimateCore =
+                             penultimateCore >>=
+                             (fmap makeHighVowelCore .
+                              preview (_semiVowelRight . _Just))
+                         verySpecificThing ::
+                                Core -> Core -> Intermediate -> Intermediate
+                         verySpecificThing h0 h1 =
+                             over (_3 . _tail) ((:) (h1, Nothing)) .
+                             set (_3 . _head . _1) h0
+                     in fmap
+                            (\f -> f intermediate)
+                            (liftA2
+                                 verySpecificThing
+                                 newPenultimateCore
+                                 newPenpenultimateCore)
+        else Just intermediate

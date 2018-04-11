@@ -22,6 +22,7 @@ dependencies:
 - sqlite-simple
 - cryptohash
 - bytestring
+- lens
 ghc-options:
 - -Werror
 - -Wall

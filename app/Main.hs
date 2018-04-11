@@ -44,7 +44,7 @@ conjugateToCardData infinitive (t, s) conjugated =
        , infinitive ++ " -- " ++ show tense
        , [infinitive, tense, subject, "simple"])
 
-type VerbConfig = (Bool, Bool)
+type VerbConfig = (Bool, Bool, Bool)
 
 --This should just really be the definition of toVerb
 toVerb' :: FullWord -> Either String Verb
@@ -58,8 +58,7 @@ conjugate' ::
        (VerbConfig, Verb)
     -> (SubjectSensativeTense, Subject)
     -> Either String FullWord
-conjugate' =
-    fmap (fmap (withLeft "could not conjugate")) (uncurry (uncurry conjugate))
+conjugate' = fmap (fmap (withLeft "could not conjugate")) (uncurry conjugate)
 
 conjugate'' ::
        (VerbConfig, String)
@@ -97,37 +96,39 @@ mkCardDatas = foldr (liftA2 (++) . configuredVerbToCardDatas) (Right [])
 
 verbs :: [(VerbConfig, String)]
 verbs =
-    [ ((False, False), "aprender")
-    , ((False, False), "argüir")
-    , ((False, False), "averiguar")
-    , ((False, False), "beber")
-    , ((False, False), "caminar")
-    , ((False, False), "comer")
-    , ((False, False), "construir")
-    , ((False, False), "decidir")
-    , ((False, False), "delinquir")
-    , ((False, False), "distinguir")
-    , ((False, False), "gozar")
-    , ((False, False), "hablar")
-    , ((False, False), "insistir")
-    , ((False, False), "leer")
+    [ ((False, False, False), "aprender")
+    , ((False, False, False), "argüir")
+    , ((False, False, False), "averiguar")
+    , ((False, False, False), "beber")
+    , ((False, False, False), "caminar")
+    , ((False, False, False), "comer")
+    , ((False, False, False), "construir")
+    , ((False, False, False), "decidir")
+    , ((False, False, False), "delinquir")
+    , ((False, False, False), "distinguir")
+    , ((False, False, False), "gozar")
+    , ((False, False, False), "hablar")
+    , ((False, False, False), "insistir")
+    , ((False, False, False), "leer")
     -- TODO: (#10) Leading 'll' does not parse.
     --, ((False, False), "llevar")
-    , ((False, False), "proteger")
-    , ((False, False), "tocar")
-    , ((False, False), "vencer")
-    , ((False, False), "vivir")
-    , ((False, True), "elegir")
-    , ((False, True), "pedir")
-    , ((False, True), "teñir")
-    , ((True, False), "avergonzar")
-    , ((True, False), "contar")
-    , ((True, False), "errar")
-    , ((True, False), "jugar")
-    , ((True, False), "oler")
-    , ((True, False), "pensar")
-    , ((True, True), "dormir")
-    , ((True, True), "sentir")
+    , ((False, False, False), "proteger")
+    , ((False, False, False), "tocar")
+    , ((False, False, False), "vencer")
+    , ((False, False, False), "vivir")
+    , ((False, False, True), "elegir")
+    , ((False, False, True), "pedir")
+    , ((False, False, True), "teñir")
+    , ((False, True, False), "avergonzar")
+    , ((False, True, False), "contar")
+    , ((False, True, False), "errar")
+    , ((False, True, False), "jugar")
+    , ((False, True, False), "oler")
+    , ((False, True, False), "pensar")
+    , ((False, True, True), "dormir")
+    , ((False, True, True), "sentir")
+    , ((True, False, False), "enviar")
+    , ((True, False, False), "aunar")
     ]
 
 newDbWithCards :: String -> [CardData] -> IO ()

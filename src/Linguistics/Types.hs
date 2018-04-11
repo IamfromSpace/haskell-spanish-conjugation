@@ -19,7 +19,11 @@ module Linguistics.Types
     , Subject(..)
     , SubjectlessTense(..)
     , SubjectSensativeTense(..)
+    , _semiVowelLeft
+    , _semiVowelRight
     ) where
+
+import Control.Lens
 
 data HighVowel
     = U
@@ -37,6 +41,12 @@ type Accentable a = (Bool, a)
 type Core
      = Accentable ( Maybe HighVowel
                   , Either HighVowel (LowVowel, Maybe HighVowel))
+
+_semiVowelLeft :: Lens' Core (Maybe HighVowel)
+_semiVowelLeft = _2 . _1
+
+_semiVowelRight :: Traversal' Core (Maybe HighVowel)
+_semiVowelRight = _2 . _2 . _Right . _2
 
 data Liquid
     = R
