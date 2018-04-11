@@ -23,11 +23,9 @@ conjugate (diphthongBreaking, diphthongizing, vowelRaising) verb@(vt, _, _, _) t
                 then breakDiphthong intermediate
                 else return intermediate
         mIntermediate' =
-            mIntermediate >>=
-            (\i ->
-                 if diphthongizing && couldDiphthongize i
-                     then diphthongize i
-                     else return i)
+            if diphthongizing && couldDiphthongize intermediate
+                then mIntermediate >>= diphthongize
+                else mIntermediate
         mIntermediate'' =
             if vowelRaising && couldVowelRaise diphthongizing intermediate
                 then mIntermediate' >>= raiseVowel
