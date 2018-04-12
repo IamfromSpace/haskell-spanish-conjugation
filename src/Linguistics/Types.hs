@@ -91,12 +91,12 @@ data Onset
     = Single Consonant
     | Double StopOrF
              Liquid
-    deriving (Show)
+    deriving (Show, Eq)
 
 data Coda =
     Coda Bool
          Consonant
-    deriving (Show)
+    deriving (Show, Eq)
 
 data VerbType
     = AR

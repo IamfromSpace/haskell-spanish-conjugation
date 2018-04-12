@@ -9,6 +9,7 @@ module Linguistics.Intermediate
     , preventAmbiguiousJointDiphthongization
     , preventUirNonIDiphthongization
     , breakDiphthong
+    , cToZc
     ) where
 
 import Control.Applicative
@@ -61,6 +62,9 @@ _jointCore = _4 . _1
 
 _penultimateCore :: Traversal' Intermediate Core
 _penultimateCore = _3 . _head . _1
+
+_penultimateInnerCluster :: Traversal' Intermediate InnerCluster
+_penultimateInnerCluster = _3 . _head . _2
 
 getImplicitStressJointRelativeOffset :: Intermediate -> Int
 getImplicitStressJointRelativeOffset (_, _, _, (_, e, maybeCoda)) =
@@ -175,3 +179,13 @@ breakDiphthong intermediate =
                      -- Perform the updates and wrap them back up
                      return ((insertNew . updateHead) intermediate)
         else Just intermediate
+
+cToZc :: Intermediate -> Maybe Intermediate
+cToZc intermediate =
+    let c = Just (Nothing, Single (Regular SoftC))
+        zc = Just (Just (Coda False (Regular SoftC)), Single (StopOrF HardC))
+    in preview _penultimateInnerCluster intermediate >>=
+       (\cluster ->
+            if cluster == c
+                then return (set _penultimateInnerCluster zc intermediate)
+                else Nothing)

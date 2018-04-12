@@ -13,8 +13,12 @@ import Linguistics.VowelRaising
 -- And it's only going to get worse as verbs get more properties (diphthong-breaking,
 -- custom preterite/subjunctives, etc)
 conjugate ::
-       HasVerbEnding a => (Bool, Bool, Bool) -> Verb -> a -> Maybe FullWord
-conjugate (diphthongBreaking, diphthongizing, vowelRaising) verb@(vt, _, _, _) tense =
+       HasVerbEnding a
+    => (Bool, Bool, Bool, Bool)
+    -> Verb
+    -> a
+    -> Maybe FullWord
+conjugate (zcVerb, diphthongBreaking, diphthongizing, vowelRaising) verb@(vt, _, _, _) tense =
     let ending = getEnding vt tense
         intermediate =
             preventUirNonIDiphthongization (toIntermediate verb ending)
@@ -31,15 +35,19 @@ conjugate (diphthongBreaking, diphthongizing, vowelRaising) verb@(vt, _, _, _) t
                 then mIntermediate' >>= raiseVowel
                 else mIntermediate'
         mIntermediate''' =
+            if zcVerb
+                then mIntermediate'' >>= cToZc
+                else mIntermediate''
+        mIntermediate'''' =
             fmap
                 (preventStressedJointDiphthongization .
                  preventAmbiguiousJointDiphthongization)
-                mIntermediate''
+                mIntermediate'''
         fullWord =
             fmap
                 (dropSemiVowelIAfterÑ .
                  dropSemiVowelIAfterLl .
                  dropMonosyllabicAccent .
                  preventStartingSemiVowel . fromIntermediate)
-                mIntermediate'''
+                mIntermediate''''
     in fullWord
