@@ -145,6 +145,9 @@ main =
                     conocer (Present, Yo) `shouldBe` "conozco"
                 it "should insert a z on on subjunctive present tú" $
                     conocer (PresentSubjunctive, Tú) `shouldBe` "conozcas"
+                it
+                    "should not insert a z on on subjunctive present tú, even on a zc word" $
+                    conocer (Present, Tú) `shouldBe` "conoces"
                 it "should not add a z on an unaffected verb in present yo" $
                     torcer (Present, Yo) `shouldBe` "tuerzo"
                 -- TODO: -cir ending verb when they're complete

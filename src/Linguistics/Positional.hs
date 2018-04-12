@@ -43,6 +43,9 @@ instance CanStartWith LowVowel Core where
     startsWith O (_, (Nothing, Right (O, _))) = True
     startsWith _ _ = False
 
+instance CanStartWith LowVowel Ending where
+    startsWith x (core, _, _) = startsWith x core
+
 class EndsWith a b where
     endsWith :: a -> b -> Bool
 

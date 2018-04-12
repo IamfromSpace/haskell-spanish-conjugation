@@ -181,11 +181,17 @@ breakDiphthong intermediate =
         else Just intermediate
 
 cToZc :: Intermediate -> Maybe Intermediate
-cToZc intermediate =
-    let c = Just (Nothing, Single (Regular SoftC))
-        zc = Just (Just (Coda False (Regular SoftC)), Single (StopOrF HardC))
-    in preview _penultimateInnerCluster intermediate >>=
-       (\cluster ->
-            if cluster == c
-                then return (set _penultimateInnerCluster zc intermediate)
-                else Nothing)
+cToZc intermediate@(_, _, _, ending) =
+    if startsWith A ending || startsWith O ending
+        then let c = Just (Nothing, Single (Regular SoftC))
+                 zc =
+                     Just
+                         ( Just (Coda False (Regular SoftC))
+                         , Single (StopOrF HardC))
+             in preview _penultimateInnerCluster intermediate >>=
+                (\cluster ->
+                     if cluster == c
+                         then return
+                                  (set _penultimateInnerCluster zc intermediate)
+                         else Nothing)
+        else Just intermediate
