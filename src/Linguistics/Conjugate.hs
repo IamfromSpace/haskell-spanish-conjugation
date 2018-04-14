@@ -14,40 +14,50 @@ import Linguistics.VowelRaising
 -- custom preterite/subjunctives, etc)
 conjugate ::
        HasVerbEnding a
-    => (Bool, Bool, Bool, Bool)
+    => (Bool, Bool, Bool, Bool, Bool)
     -> Verb
     -> a
     -> Maybe FullWord
-conjugate (zcVerb, diphthongBreaking, diphthongizing, vowelRaising) verb@(vt, _, _, _) tense =
+conjugate (isYoGoVerb, isZcVerb, isDiphthongBreaking, isDiphthongizing, isVowelRaising) verb@(vt, _, _, _) tense =
     let ending = getEnding vt tense
         intermediate =
             preventUirNonIDiphthongization (toIntermediate verb ending)
+        willYoGo = isYoGoVerb && couldYoGo intermediate
+        willDiphthongize =
+            isDiphthongizing && couldDiphthongize intermediate && not willYoGo
+        willVowelRaise =
+            isVowelRaising &&
+            couldVowelRaise intermediate && not willDiphthongize
         mIntermediate =
-            if diphthongBreaking
+            if isDiphthongBreaking
                 then breakDiphthong intermediate
                 else return intermediate
         mIntermediate' =
-            if diphthongizing && couldDiphthongize intermediate
+            if willDiphthongize
                 then mIntermediate >>= diphthongize
                 else mIntermediate
         mIntermediate'' =
-            if vowelRaising && couldVowelRaise diphthongizing intermediate
+            if willVowelRaise
                 then mIntermediate' >>= raiseVowel
                 else mIntermediate'
         mIntermediate''' =
-            if zcVerb
+            if isZcVerb && couldCToZc intermediate
                 then mIntermediate'' >>= cToZc
                 else mIntermediate''
         mIntermediate'''' =
+            if willYoGo
+                then mIntermediate''' >>= yoGo
+                else mIntermediate'''
+        mIntermediate''''' =
             fmap
                 (preventStressedJointDiphthongization .
                  preventAmbiguiousJointDiphthongization)
-                mIntermediate'''
+                mIntermediate''''
         fullWord =
             fmap
                 (dropSemiVowelIAfterÑ .
                  dropSemiVowelIAfterLl .
                  dropMonosyllabicAccent .
                  preventStartingSemiVowel . fromIntermediate)
-                mIntermediate''''
+                mIntermediate'''''
     in fullWord

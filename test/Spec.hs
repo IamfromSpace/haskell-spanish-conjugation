@@ -152,6 +152,46 @@ main =
                     torcer (Present, Yo) `shouldBe` "tuerzo"
                 -- TODO: -cir ending verb when they're complete
                 -- (they all seem to have irregular preterite stems)
+            describe "yo-go verbs" $
+                -- Untested, but theoretically would support a yo-go verb that
+                -- both vowel raises and diphthongizes, for example:
+                -- fakewordocer -> yo fakewordugo, usted fakeworduece, usted fakeworduciera
+                -- However, I can't find a word that does.
+             do
+                it "should insert an ig between vowels on present yo" $
+                    caer (Present, Yo) `shouldBe` "caigo"
+                it "should insert a g on a s on present yo" $
+                    asir (Present, Yo) `shouldBe` "asgo"
+                it "should convert a c to a g on present yo (and vowel raise)" $
+                    decir (Present, Yo) `shouldBe` "digo"
+                it
+                    "should insert a g on an n on present yo (and not diphthongize)" $
+                    tener (Present, Yo) `shouldBe` "tengo"
+                it "should insert a g on an l on present yo" $
+                    salir (Present, Yo) `shouldBe` "salgo"
+                it
+                    "should insert an ig between vowels on subjunctive present yo" $
+                    caer (PresentSubjunctive, Yo) `shouldBe` "caiga"
+                it "should insert a g on a s on subjunctive present yo" $
+                    asir (PresentSubjunctive, Yo) `shouldBe` "asga"
+                it
+                    "should convert a c to a g on subjunctive present yo (and vowel raise)" $
+                    decir (PresentSubjunctive, Yo) `shouldBe` "diga"
+                it
+                    "should insert a g on an n on subjunctive present yo (and not diphthongize)" $
+                    tener (PresentSubjunctive, Yo) `shouldBe` "tenga"
+                it "should insert a g on an l on subjunctive present yo" $
+                    salir (PresentSubjunctive, Yo) `shouldBe` "salga"
+                it "should should not insert a g on present tú for caer" $
+                    caer (Present, Tú) `shouldBe` "caes"
+                it "should should not insert a g on present tú for asir" $
+                    asir (Present, Tú) `shouldBe` "ases"
+                it "should should not insert a g on present tú for decir" $
+                    decir (Present, Tú) `shouldBe` "dices"
+                it "should should not insert a g on present tú for tener" $
+                    tener (Present, Tú) `shouldBe` "tienes"
+                it "should should not insert a g on present tú for salir" $
+                    salir (Present, Tú) `shouldBe` "sales"
             describe "misc" $ do
                 it "should not start with a semivowel i" $
                     oler (Present, Yo) `shouldBe` "huelo"
@@ -205,14 +245,14 @@ type VerbHelper a = a -> String
 -- TODO: these are probably _close_ to being useful lib functions
 cong ::
        HasVerbEnding a
-    => (Bool, Bool, Bool, Bool)
+    => (Bool, Bool, Bool, Bool, Bool)
     -> FullWord
     -> a
     -> Maybe String
 cong vConf fw st = fmap render (toVerb fw >>= flip (conjugate vConf) st)
 
 -- This is not total, but that's actually perfect for our tests
-v :: HasVerbEnding a => (Bool, Bool, Bool, Bool) -> String -> VerbHelper a
+v :: HasVerbEnding a => (Bool, Bool, Bool, Bool, Bool) -> String -> VerbHelper a
 v vConf str st =
     let renderedParser = fmap (\fw -> cong vConf fw st) wordOnly
     in case runParser renderedParser str of
@@ -229,103 +269,118 @@ v vConf str st =
                error "Test inputs are invalid!  Verb string was not parseable!"
 
 tocar :: HasVerbEnding a => VerbHelper a
-tocar = v (False, False, False, False) "tocar"
+tocar = v (False, False, False, False, False) "tocar"
 
 gozar :: HasVerbEnding a => VerbHelper a
-gozar = v (False, False, False, False) "gozar"
+gozar = v (False, False, False, False, False) "gozar"
 
 averiguar :: HasVerbEnding a => VerbHelper a
-averiguar = v (False, False, False, False) "averiguar"
+averiguar = v (False, False, False, False, False) "averiguar"
 
 delinquir :: HasVerbEnding a => VerbHelper a
-delinquir = v (False, False, False, False) "delinquir"
+delinquir = v (False, False, False, False, False) "delinquir"
 
 vencer :: HasVerbEnding a => VerbHelper a
-vencer = v (False, False, False, False) "vencer"
+vencer = v (False, False, False, False, False) "vencer"
 
 proteger :: HasVerbEnding a => VerbHelper a
-proteger = v (False, False, False, False) "proteger"
+proteger = v (False, False, False, False, False) "proteger"
 
 distinguir :: HasVerbEnding a => VerbHelper a
-distinguir = v (False, False, False, False) "distinguir"
+distinguir = v (False, False, False, False, False) "distinguir"
 
 construir :: HasVerbEnding a => VerbHelper a
-construir = v (False, False, False, False) "construir"
+construir = v (False, False, False, False, False) "construir"
 
 argüir :: HasVerbEnding a => VerbHelper a
-argüir = v (False, False, False, False) "argüir"
+argüir = v (False, False, False, False, False) "argüir"
 
 hablar :: HasVerbEnding a => VerbHelper a
-hablar = v (False, False, False, False) "hablar"
+hablar = v (False, False, False, False, False) "hablar"
 
 correr :: HasVerbEnding a => VerbHelper a
-correr = v (False, False, False, False) "correr"
+correr = v (False, False, False, False, False) "correr"
 
 caer :: HasVerbEnding a => VerbHelper a
-caer = v (False, False, False, False) "caer"
+caer = v (True, False, False, False, False) "caer"
 
 leer :: HasVerbEnding a => VerbHelper a
-leer = v (False, False, False, False) "leer"
+leer = v (False, False, False, False, False) "leer"
 
 oír :: HasVerbEnding a => VerbHelper a
-oír = v (False, False, False, False) "oír"
+oír = v (False, False, False, False, False) "oír"
 
 liar :: HasVerbEnding a => VerbHelper a
-liar = v (False, False, False, False) "liar"
+liar = v (False, False, False, False, False) "liar"
 
 ver :: HasVerbEnding a => VerbHelper a
-ver = v (False, False, False, False) "ver"
+ver = v (False, False, False, False, False) "ver"
 
 bullir :: HasVerbEnding a => VerbHelper a
-bullir = v (False, False, False, False) "bullir"
+bullir = v (False, False, False, False, False) "bullir"
 
 tañer :: HasVerbEnding a => VerbHelper a
-tañer = v (False, False, False, False) "tañer"
+tañer = v (False, False, False, False, False) "tañer"
 
 pensar :: HasVerbEnding a => VerbHelper a
-pensar = v (False, False, True, False) "pensar"
+pensar = v (False, False, False, True, False) "pensar"
 
 contar :: HasVerbEnding a => VerbHelper a
-contar = v (False, False, True, False) "contar"
+contar = v (False, False, False, True, False) "contar"
 
 adquirir :: HasVerbEnding a => VerbHelper a
-adquirir = v (False, False, True, False) "adquirir"
+adquirir = v (False, False, False, True, False) "adquirir"
 
 jugar :: HasVerbEnding a => VerbHelper a
-jugar = v (False, False, True, False) "jugar"
+jugar = v (False, False, False, True, False) "jugar"
 
 oler :: HasVerbEnding a => VerbHelper a
-oler = v (False, False, True, False) "oler"
+oler = v (False, False, False, True, False) "oler"
 
 errar :: HasVerbEnding a => VerbHelper a
-errar = v (False, False, True, False) "errar"
+errar = v (False, False, False, True, False) "errar"
 
 avergonzar :: HasVerbEnding a => VerbHelper a
-avergonzar = v (False, False, True, False) "avergonzar"
+avergonzar = v (False, False, False, True, False) "avergonzar"
 
 pedir :: HasVerbEnding a => VerbHelper a
-pedir = v (False, False, False, True) "pedir"
+pedir = v (False, False, False, False, True) "pedir"
 
 dormir :: HasVerbEnding a => VerbHelper a
-dormir = v (False, False, True, True) "dormir"
+dormir = v (False, False, False, True, True) "dormir"
 
 sentir :: HasVerbEnding a => VerbHelper a
-sentir = v (False, False, True, True) "sentir"
+sentir = v (False, False, False, True, True) "sentir"
 
 enviar :: HasVerbEnding a => VerbHelper a
-enviar = v (False, True, False, False) "enviar"
+enviar = v (False, False, True, False, False) "enviar"
 
 aislar :: HasVerbEnding a => VerbHelper a
-aislar = v (False, True, False, False) "aislar"
+aislar = v (False, False, True, False, False) "aislar"
 
 aunar :: HasVerbEnding a => VerbHelper a
-aunar = v (False, True, False, False) "aunar"
+aunar = v (False, False, True, False, False) "aunar"
 
 descafeinar :: HasVerbEnding a => VerbHelper a
-descafeinar = v (False, True, False, False) "descafeinar"
+descafeinar = v (False, False, True, False, False) "descafeinar"
 
 conocer :: HasVerbEnding a => VerbHelper a
-conocer = v (True, False, False, False) "conocer"
+conocer = v (False, True, False, False, False) "conocer"
 
 torcer :: HasVerbEnding a => VerbHelper a
-torcer = v (False, False, True, False) "torcer"
+torcer = v (False, False, False, True, False) "torcer"
+
+asir :: HasVerbEnding a => VerbHelper a
+asir = v (True, False, False, False, False) "asir"
+
+-- NOTE:  Not all rules for this verb are currently supported!
+decir :: HasVerbEnding a => VerbHelper a
+decir = v (True, False, False, False, True) "decir"
+
+-- NOTE:  Not all rules for this verb are currently supported!
+tener :: HasVerbEnding a => VerbHelper a
+tener = v (True, False, False, True, False) "tener"
+
+-- NOTE:  Not all rules for this verb are currently supported!
+salir :: HasVerbEnding a => VerbHelper a
+salir = v (True, False, False, False, False) "salir"

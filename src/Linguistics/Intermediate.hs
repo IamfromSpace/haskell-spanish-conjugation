@@ -1,3 +1,5 @@
+{-# LANGUAGE LambdaCase #-}
+
 module Linguistics.Intermediate
     ( toIntermediate
     , fromIntermediate
@@ -9,7 +11,10 @@ module Linguistics.Intermediate
     , preventAmbiguiousJointDiphthongization
     , preventUirNonIDiphthongization
     , breakDiphthong
+    , couldCToZc
     , cToZc
+    , couldYoGo
+    , yoGo
     ) where
 
 import Control.Applicative
@@ -19,7 +24,7 @@ import qualified Data.Maybe as Maybe
 import Linguistics.Positional (startsWith)
 import Linguistics.Stress
 import Linguistics.Types
-import Utils (mHead)
+import Utils (($>), mHead)
 
 -- This is all pretty ugly and shows that these types are hardly
 -- "transparent" to the user.  All these actions should be performed
@@ -94,15 +99,14 @@ startsWithIR (jointCore, innerSyllables, mCoda) =
         (fmap (startsWith R . fst) (mHead innerSyllables) <|>
          fmap (startsWith R) mCoda)
 
-couldVowelRaise :: Bool -> Intermediate -> Bool
-couldVowelRaise diphthongizes intermediate@(_, _, _, ending@(joint, _, _)) =
-    let willDiphthongize = diphthongizes && couldDiphthongize intermediate
-        jointIsImplicitlyStressed =
+couldVowelRaise :: Intermediate -> Bool
+couldVowelRaise intermediate@(_, _, _, ending@(joint, _, _)) =
+    let jointIsImplicitlyStressed =
             getImplicitStressJointRelativeOffset intermediate == 0
         jointHasStressedI =
             hasStressableI joint &&
             (hasExplicitStress joint || jointIsImplicitlyStressed)
-    in not willDiphthongize && not (startsWithIR ending || jointHasStressedI)
+    in not (startsWithIR ending || jointHasStressedI)
 
 {- TODO: These three rules could use some work on approach/implementation...
  the pattern match is crazy, but the alternative is about a million checks. -}
@@ -180,18 +184,41 @@ breakDiphthong intermediate =
                      return ((insertNew . updateHead) intermediate)
         else Just intermediate
 
+couldCToZc :: Intermediate -> Bool
+couldCToZc (_, _, _, ending) = startsWith A ending || startsWith O ending
+
 cToZc :: Intermediate -> Maybe Intermediate
-cToZc intermediate@(_, _, _, ending) =
-    if startsWith A ending || startsWith O ending
-        then let c = Just (Nothing, Single (Regular SoftC))
-                 zc =
-                     Just
-                         ( Just (Coda False (Regular SoftC))
-                         , Single (StopOrF HardC))
-             in preview _penultimateInnerCluster intermediate >>=
-                (\cluster ->
-                     if cluster == c
-                         then return
-                                  (set _penultimateInnerCluster zc intermediate)
-                         else Nothing)
-        else Just intermediate
+cToZc intermediate =
+    let c = Just (Nothing, Single (Regular SoftC))
+        zc = Just (Just (Coda False (Regular SoftC)), Single (StopOrF HardC))
+    in preview _penultimateInnerCluster intermediate >>=
+       (\cluster ->
+            if cluster == c
+                then return (set _penultimateInnerCluster zc intermediate)
+                else Nothing)
+
+couldYoGo :: Intermediate -> Bool
+couldYoGo = couldCToZc
+
+yoGo :: Intermediate -> Maybe Intermediate
+yoGo intermediate =
+    let pushG x =
+            set
+                _penultimateInnerCluster
+                (Just (Just (Coda False x), Single (StopOrF HardG)))
+                intermediate
+        setG =
+            set
+                _penultimateInnerCluster
+                (Just (Nothing, Single (StopOrF HardG)))
+                intermediate
+    in preview _penultimateInnerCluster intermediate >>=
+       (\case
+            Just (Nothing, Single x@(Regular N)) -> Just (pushG x)
+            Just (Nothing, Single x@(Regular S)) -> Just (pushG x)
+            Just (Nothing, Single x@(Liquid L)) -> Just (pushG x)
+            Just (Nothing, Single (Regular SoftC)) -> Just setG
+            Nothing ->
+                preview (_penultimateCore . _semiVowelRight) intermediate $>
+                set (_penultimateCore . _semiVowelRight) (Just I) setG
+            _ -> Nothing)
