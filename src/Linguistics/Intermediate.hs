@@ -239,7 +239,7 @@ couldShortenedInfinitives intermediate
     -- (which is _not_ in the coda, meaning it's not the infinitive itself)
  =
     isNothing (view (_jointCore . _semiVowelLeft) intermediate) &&
-    maybe False isNothing (preview (_jointCore . _semiVowelRight) intermediate) &&
+    maybe True isNothing (preview (_jointCore . _semiVowelRight) intermediate) &&
     maybe
         False
         (startsWith R)
