@@ -1,4 +1,4 @@
-{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE LambdaCase, RankNTypes #-}
 
 module Linguistics.Intermediate
     ( toIntermediate
@@ -242,18 +242,24 @@ couldShortenedInfinitives _ = True
 
 shortenedInfinitives :: Intermediate -> Maybe Intermediate
 shortenedInfinitives intermediate =
-    let popEndingSyllable x
+    let popSyllable ::
+               Lens' Intermediate [a] -> Intermediate -> Maybe Intermediate
+        popSyllable listLens x
          -- Remove the first (non-joint) syllable
-         -- from the ending (consonants + core)
-         =
-            fmap
-                (flip (set _endingSyllables) x)
-                (preview (_endingSyllables . _tail) x)
-        moveNextCoreToJoint x
-         -- Take the core in the first (non-joint) ending syllable,
-         -- and set the joint to that value
-         = fmap (flip (set _jointCore) x) (preview _nextCore x)
-        dropAndPullCore
+         -- from the lens'd (consonants + core)
+         = fmap (flip (set listLens) x) (preview (listLens . _tail) x)
+        popEndingSyllable = popSyllable _endingSyllables
+        popStemSyllable = popSyllable _3
+        moveACoreToJoint ::
+               Traversal' Intermediate Core
+            -> Intermediate
+            -> Maybe Intermediate
+        moveACoreToJoint coreLens x
+         -- Take a lens'd core, and set the joint to that value
+         = fmap (flip (set _jointCore) x) (preview coreLens x)
+        moveNextCoreToJoint = moveACoreToJoint _nextCore
+        movePenultimateCoreToJoint = moveACoreToJoint _penultimateCore
+        popEndingAndPullItsCoreToJoint
          -- drop next ending syllable, but replace the joint with its core
          = moveNextCoreToJoint >=> popEndingSyllable
         addLiquidForDouble stopOrF =
@@ -273,21 +279,29 @@ shortenedInfinitives intermediate =
          -- and I've consistently erred on the side of strictness.
        (\case
             Just (Nothing, Single (StopOrF x@B)) ->
-                dropAndPullCore $ addLiquidForDouble x intermediate
+                popEndingAndPullItsCoreToJoint $
+                addLiquidForDouble x intermediate
             Just (Nothing, Single (StopOrF x@D)) ->
-                dropAndPullCore $ addLiquidForDouble x intermediate
+                popEndingAndPullItsCoreToJoint $
+                addLiquidForDouble x intermediate
             Just (Nothing, Single (Liquid R)) ->
-                dropAndPullCore $ insertRIntoCoda intermediate
+                popEndingAndPullItsCoreToJoint $ insertRIntoCoda intermediate
             Just (Nothing, Single x@(Liquid L)) ->
-                dropAndPullCore $
+                popEndingAndPullItsCoreToJoint $
                 insertConsonantIntoCodaAndDrIntoOnset x intermediate
             Just (Nothing, Single x@(Regular N)) ->
-                dropAndPullCore $
+                popEndingAndPullItsCoreToJoint $
                 insertConsonantIntoCodaAndDrIntoOnset x intermediate
             Just (_, Single (Regular SoftC))
-            -- TODO:
-            -- drop this syllable
-            -- move its core into the joint if it is not an e (and the joint is)
-            -- if neither is an 'e' this fails
-             -> return intermediate
+            -- drop -ec the -ce (or fail)
+             ->
+                case view _jointCore intermediate of
+                    (_, (_, Right (E, _))) ->
+                        movePenultimateCoreToJoint intermediate >>=
+                        popStemSyllable
+                    _ ->
+                        case preview _penultimateCore intermediate of
+                            Just (_, (_, Right (E, _))) ->
+                                popStemSyllable intermediate
+                            _ -> Nothing
             _ -> Nothing)
