@@ -22,7 +22,7 @@ module Linguistics.Intermediate
 import Control.Applicative
 import Control.Lens
 import Control.Monad ((>=>))
-import Data.Maybe (fromMaybe)
+import Data.Maybe (fromMaybe, isNothing, maybe)
 import qualified Data.Maybe as Maybe
 import Linguistics.Positional (startsWith)
 import Linguistics.Stress
@@ -232,13 +232,18 @@ yoGo intermediate =
                 set (_penultimateCore . _semiVowelRight) (Just I) setG
             _ -> Nothing)
 
--- Must have:
---  - IR/ER verb type
---  - more than one ending syllable (so the infinitive itself isn't affected)
---  - the first ending consonant cluster starts with 'r'
---  - no diphthongs in the joint (ex. must not apply to -ieron)
 couldShortenedInfinitives :: Intermediate -> Bool
-couldShortenedInfinitives _ = True
+couldShortenedInfinitives intermediate
+    -- no diphthongs in the joint (ex. must not apply to -ieron)
+    -- and the first ending consonant cluster starts with 'r'
+    -- (which is _not_ in the coda, meaning it's not the infinitive itself)
+ =
+    isNothing (view (_jointCore . _semiVowelLeft) intermediate) &&
+    maybe False isNothing (preview (_jointCore . _semiVowelRight) intermediate) &&
+    maybe
+        False
+        (startsWith R)
+        (preview (_endingSyllables . _head . _1) intermediate)
 
 shortenedInfinitives :: Intermediate -> Maybe Intermediate
 shortenedInfinitives intermediate =
