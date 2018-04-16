@@ -15,10 +15,13 @@ module Linguistics.Intermediate
     , cToZc
     , couldYoGo
     , yoGo
+    , couldShortenedInfinitives
+    , shortenedInfinitives
     ) where
 
 import Control.Applicative
 import Control.Lens
+import Control.Monad ((>=>))
 import Data.Maybe (fromMaybe)
 import qualified Data.Maybe as Maybe
 import Linguistics.Positional (startsWith)
@@ -64,6 +67,12 @@ fromIntermediate (_, mo, stemList, (core, endingList, coda)) =
 
 _jointCore :: Lens' Intermediate Core
 _jointCore = _4 . _1
+
+_endingSyllables :: Lens' Intermediate [InnerSyllable]
+_endingSyllables = _4 . _2
+
+_nextCore :: Traversal' Intermediate Core
+_nextCore = _endingSyllables . _head . _2
 
 _penultimateCore :: Traversal' Intermediate Core
 _penultimateCore = _3 . _head . _1
@@ -221,4 +230,64 @@ yoGo intermediate =
             Nothing ->
                 preview (_penultimateCore . _semiVowelRight) intermediate $>
                 set (_penultimateCore . _semiVowelRight) (Just I) setG
+            _ -> Nothing)
+
+-- Must have:
+--  - IR/ER verb type
+--  - more than one ending syllable (so the infinitive itself isn't affected)
+--  - the first ending consonant cluster starts with 'r'
+--  - no diphthongs in the joint (ex. must not apply to -ieron)
+couldShortenedInfinitives :: Intermediate -> Bool
+couldShortenedInfinitives _ = True
+
+shortenedInfinitives :: Intermediate -> Maybe Intermediate
+shortenedInfinitives intermediate =
+    let popEndingSyllable x
+         -- Remove the first (non-joint) syllable
+         -- from the ending (consonants + core)
+         =
+            fmap
+                (flip (set _endingSyllables) x)
+                (preview (_endingSyllables . _tail) x)
+        moveNextCoreToJoint x
+         -- Take the core in the first (non-joint) ending syllable,
+         -- and set the joint to that value
+         = fmap (flip (set _jointCore) x) (preview _nextCore x)
+        dropAndPullCore
+         -- drop next ending syllable, but replace the joint with its core
+         = moveNextCoreToJoint >=> popEndingSyllable
+        addLiquidForDouble stopOrF =
+            set (_penultimateInnerCluster . _Just . _2) (Double stopOrF R)
+        insertRIntoCoda =
+            set
+                (_penultimateInnerCluster . _Just . _1)
+                (Just (Coda False (Liquid R)))
+        insertConsonantIntoCodaAndDrIntoOnset consonant =
+            set
+                (_penultimateInnerCluster . _Just)
+                (Just (Coda False consonant), Double D R)
+    in preview _penultimateInnerCluster intermediate >>=
+         -- The first two rules are pretty strict. Theoretically, this could
+         -- work with any StopOrF, and a Coda _could_ be defined as well.
+         -- However, I can't find any example words that behave that way,
+         -- and I've consistently erred on the side of strictness.
+       (\case
+            Just (Nothing, Single (StopOrF x@B)) ->
+                dropAndPullCore $ addLiquidForDouble x intermediate
+            Just (Nothing, Single (StopOrF x@D)) ->
+                dropAndPullCore $ addLiquidForDouble x intermediate
+            Just (Nothing, Single (Liquid R)) ->
+                dropAndPullCore $ insertRIntoCoda intermediate
+            Just (Nothing, Single x@(Liquid L)) ->
+                dropAndPullCore $
+                insertConsonantIntoCodaAndDrIntoOnset x intermediate
+            Just (Nothing, Single x@(Regular N)) ->
+                dropAndPullCore $
+                insertConsonantIntoCodaAndDrIntoOnset x intermediate
+            Just (_, Single (Regular SoftC))
+            -- TODO:
+            -- drop this syllable
+            -- move its core into the joint if it is not an e (and the joint is)
+            -- if neither is an 'e' this fails
+             -> return intermediate
             _ -> Nothing)

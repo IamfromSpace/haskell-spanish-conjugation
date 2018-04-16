@@ -14,11 +14,11 @@ import Linguistics.VowelRaising
 -- custom preterite/subjunctives, etc)
 conjugate ::
        HasVerbEnding a
-    => (Bool, Bool, Bool, Bool, Bool)
+    => (Bool, Bool, Bool, Bool, Bool, Bool)
     -> Verb
     -> a
     -> Maybe FullWord
-conjugate (isYoGoVerb, isZcVerb, isDiphthongBreaking, isDiphthongizing, isVowelRaising) verb@(vt, _, _, _) tense =
+conjugate (hasIrregularInfinitives, isYoGoVerb, isZcVerb, isDiphthongBreaking, isDiphthongizing, isVowelRaising) verb@(vt, _, _, _) tense =
     let ending = getEnding vt tense
         intermediate =
             preventUirNonIDiphthongization (toIntermediate verb ending)
@@ -49,15 +49,19 @@ conjugate (isYoGoVerb, isZcVerb, isDiphthongBreaking, isDiphthongizing, isVowelR
                 then mIntermediate''' >>= yoGo
                 else mIntermediate'''
         mIntermediate''''' =
+            if hasIrregularInfinitives && couldShortenedInfinitives intermediate
+                then mIntermediate'''' >>= shortenedInfinitives
+                else mIntermediate''''
+        mIntermediate'''''' =
             fmap
                 (preventStressedJointDiphthongization .
                  preventAmbiguiousJointDiphthongization)
-                mIntermediate''''
+                mIntermediate'''''
         fullWord =
             fmap
                 (dropSemiVowelIAfterÑ .
                  dropSemiVowelIAfterLl .
                  dropMonosyllabicAccent .
                  preventStartingSemiVowel . fromIntermediate)
-                mIntermediate'''''
+                mIntermediate''''''
     in fullWord
