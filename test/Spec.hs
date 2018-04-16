@@ -192,6 +192,30 @@ main =
                     tener (Present, Tú) `shouldBe` "tienes"
                 it "should should not insert a g on present tú for salir" $
                     salir (Present, Tú) `shouldBe` "sales"
+            describe "infinitive shortening verbs" $ do
+                it "should drop the e between br in the future" $
+                    saber (Future, Nosotros) `shouldBe` "sabremos"
+                it "should drop the e between dr in the future" $
+                    poder (Future, Nosotros) `shouldBe` "podremos"
+                it "should drop the e between rr in the future" $
+                    querer (Future, Nosotros) `shouldBe` "querremos"
+                it "should replace e with a d between nr in the future" $
+                    tener (Future, Nosotros) `shouldBe` "tendremos"
+                it "should replace i with a d between lr in the future" $
+                    salir (Future, Nosotros) `shouldBe` "saldremos"
+                it "should drop -ce in the future" $
+                    hacer (Future, Nosotros) `shouldBe` "haremos"
+                it "should drop -ec in the future" $
+                    decir (Future, Nosotros) `shouldBe` "diremos"
+                it "should not drop the e between br if there's a diphthong" $
+                    saber (Preterite, Ustedes) `shouldBe` "sabieron"
+                it "should not drop the i between lr if there's a diphthong" $
+                    salir (Preterite, Ustedes) `shouldBe` "salieron"
+                it
+                    "should not drop the e between br if it's actually the infinitive" $
+                    saber Infinitive `shouldBe` "saber"
+                it "should not drop the e if there is no r in the ending" $
+                    saber (Present, Nosotros) `shouldBe` "sabemos"
             describe "misc" $ do
                 it "should not start with a semivowel i" $
                     oler (Present, Yo) `shouldBe` "huelo"
@@ -378,12 +402,27 @@ asir = v (False, True, False, False, False, False) "asir"
 
 -- NOTE:  Not all rules for this verb are currently supported!
 decir :: HasVerbEnding a => VerbHelper a
-decir = v (False, True, False, False, False, True) "decir"
+decir = v (True, True, False, False, False, True) "decir"
 
 -- NOTE:  Not all rules for this verb are currently supported!
 tener :: HasVerbEnding a => VerbHelper a
-tener = v (False, True, False, False, True, False) "tener"
+tener = v (True, True, False, False, True, False) "tener"
+
+salir :: HasVerbEnding a => VerbHelper a
+salir = v (True, True, False, False, False, False) "salir"
 
 -- NOTE:  Not all rules for this verb are currently supported!
-salir :: HasVerbEnding a => VerbHelper a
-salir = v (False, True, False, False, False, False) "salir"
+saber :: HasVerbEnding a => VerbHelper a
+saber = v (True, False, False, False, False, False) "saber"
+
+-- NOTE:  Not all rules for this verb are currently supported!
+poder :: HasVerbEnding a => VerbHelper a
+poder = v (True, False, False, False, True, False) "poder"
+
+-- NOTE:  Not all rules for this verb are currently supported!
+querer :: HasVerbEnding a => VerbHelper a
+querer = v (True, False, False, False, True, False) "querer"
+
+-- NOTE:  Not all rules for this verb are currently supported!
+hacer :: HasVerbEnding a => VerbHelper a
+hacer = v (True, True, False, False, False, False) "hacer"
