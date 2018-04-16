@@ -133,6 +133,7 @@ verbs =
     , ((False, False, True, False, False, False), "nacer")
     , ((False, True, False, False, False, False), "asir")
     , ((False, True, False, False, False, False), "caer")
+    , ((True, True, False, False, False, False), "salir")
     ]
 
 newDbWithCards :: String -> [CardData] -> IO ()
