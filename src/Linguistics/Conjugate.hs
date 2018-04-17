@@ -4,6 +4,7 @@ module Linguistics.Conjugate
 
 import Linguistics.Diphthongizing
 import Linguistics.FullWord
+import Linguistics.HandleIrregularPreterite
 import Linguistics.Intermediate
 import Linguistics.Types
 import Linguistics.VerbEnding
@@ -13,12 +14,12 @@ import Linguistics.VowelRaising
 -- And it's only going to get worse as verbs get more properties (diphthong-breaking,
 -- custom preterite/subjunctives, etc)
 conjugate ::
-       HasVerbEnding a
-    => (Bool, Bool, Bool, Bool, Bool, Bool)
+       (HasVerbEnding a, HandlesIrregularPreterite a)
+    => (Maybe (Bool, (Core, InnerCluster)), Bool, Bool, Bool, Bool, Bool, Bool)
     -> Verb
     -> a
     -> Maybe FullWord
-conjugate (hasIrregularInfinitives, isYoGoVerb, isZcVerb, isDiphthongBreaking, isDiphthongizing, isVowelRaising) verb@(vt, _, _, _) tense =
+conjugate (irregularPreterite, hasIrregularInfinitives, isYoGoVerb, isZcVerb, isDiphthongBreaking, isDiphthongizing, isVowelRaising) verb@(vt, _, _, _) tense =
     let ending = getEnding vt tense
         intermediate =
             preventUirNonIDiphthongization (toIntermediate verb ending)
@@ -53,15 +54,21 @@ conjugate (hasIrregularInfinitives, isYoGoVerb, isZcVerb, isDiphthongBreaking, i
                 then mIntermediate'''' >>= shortenedInfinitives
                 else mIntermediate''''
         mIntermediate'''''' =
+            case irregularPreterite of
+                Just (shouldReplace, syllable) ->
+                    mIntermediate''''' >>=
+                    handleIrregularPreterite tense shouldReplace syllable
+                Nothing -> mIntermediate'''''
+        mIntermediate''''''' =
             fmap
                 (preventStressedJointDiphthongization .
                  preventAmbiguiousJointDiphthongization)
-                mIntermediate'''''
+                mIntermediate''''''
         fullWord =
             fmap
                 (dropSemiVowelIAfterÑ .
                  dropSemiVowelIAfterLl .
                  dropMonosyllabicAccent .
                  preventStartingSemiVowel . fromIntermediate)
-                mIntermediate''''''
+                mIntermediate'''''''
     in fullWord

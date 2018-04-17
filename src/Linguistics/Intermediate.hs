@@ -17,6 +17,8 @@ module Linguistics.Intermediate
     , yoGo
     , couldShortenedInfinitives
     , shortenedInfinitives
+    , updatePenultimateSyllable
+    , setSimpleEnd
     ) where
 
 import Control.Applicative
@@ -70,6 +72,9 @@ _jointCore = _4 . _1
 
 _endingSyllables :: Lens' Intermediate [InnerSyllable]
 _endingSyllables = _4 . _2
+
+_coda :: Lens' Intermediate (Maybe Coda)
+_coda = _4 . _3
 
 _nextCore :: Traversal' Intermediate Core
 _nextCore = _endingSyllables . _head . _2
@@ -310,3 +315,25 @@ shortenedInfinitives intermediate =
                                 popStemSyllable intermediate
                             _ -> Nothing
             _ -> Nothing)
+
+setPenultimateSyllable ::
+       (Core, InnerCluster) -> Intermediate -> Maybe Intermediate
+setPenultimateSyllable new intermediate =
+    if has (_3 . _head) intermediate
+        then Just $ set (_3 . _head) new intermediate
+        else Nothing
+
+appendPenultimateSyllable ::
+       (Core, InnerCluster) -> Intermediate -> Intermediate
+appendPenultimateSyllable new = over _3 (new :)
+
+updatePenultimateSyllable ::
+       Bool -> (Core, InnerCluster) -> Intermediate -> Maybe Intermediate
+updatePenultimateSyllable shouldReplace syllable =
+    if shouldReplace
+        then setPenultimateSyllable syllable
+        else Just . appendPenultimateSyllable syllable
+
+setSimpleEnd :: LowVowel -> Intermediate -> Intermediate
+setSimpleEnd lowVowel =
+    set _4 ((False, (Nothing, Right (lowVowel, Nothing))), [], Nothing)
