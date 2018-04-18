@@ -5,7 +5,6 @@ import Test.Hspec.Runner (hspec)
 import Control.Applicative
 import Data.Maybe (isJust)
 import Linguistics.Conjugate
-import Linguistics.FullWord (toVerb)
 import Linguistics.HandleIrregularPreterite
 import Linguistics.Parsers (wordOnly)
 import Linguistics.Render
@@ -274,173 +273,157 @@ main =
 
 type VerbHelper a = a -> String
 
--- TODO: these are probably _close_ to being useful lib functions
-cong ::
-       (HasVerbEnding a, HandlesIrregularPreterite a)
-    => (Maybe (Bool, (Core, InnerCluster)), Bool, Bool, Bool, Bool, Bool, Bool)
-    -> FullWord
-    -> a
-    -> Maybe String
-cong vConf fw st = fmap render (toVerb fw >>= flip (conjugate vConf) st)
-
 -- This is not total, but that's actually perfect for our tests
 v :: (HasVerbEnding a, HandlesIrregularPreterite a)
-  => (Maybe (Bool, (Core, InnerCluster)), Bool, Bool, Bool, Bool, Bool, Bool)
-  -> String
+  => (VerbConfig, String)
   -> VerbHelper a
-v vConf str st =
-    let renderedParser = fmap (\fw -> cong vConf fw st) wordOnly
-    in case runParser renderedParser str of
-           Right ("", Just rendered) -> rendered
-           Right (_:_, Just _)
-               -- This case really should be impossible by using `wordOnly`
-            ->
-               error
-                   "Test inputs are invalid!  Verb string was not fully parsed!"
-           Right (_, Nothing) ->
-               error
-                   "Test inputs are invalid!  Verb had no valid conjugation (did not end with ar/er/ir, could not diphthongize, etc)!"
-           Left _ ->
-               error "Test inputs are invalid!  Verb string was not parseable!"
+v x tense =
+    case conjugate x tense of
+        Right fw -> render fw
+        Left err -> error err
 
 tocar :: (HasVerbEnding a, HandlesIrregularPreterite a) => VerbHelper a
-tocar = v (Nothing, False, False, False, False, False, False) "tocar"
+tocar = v ((Nothing, False, False, False, False, False, False), "tocar")
 
 gozar :: (HasVerbEnding a, HandlesIrregularPreterite a) => VerbHelper a
-gozar = v (Nothing, False, False, False, False, False, False) "gozar"
+gozar = v ((Nothing, False, False, False, False, False, False), "gozar")
 
 averiguar :: (HasVerbEnding a, HandlesIrregularPreterite a) => VerbHelper a
-averiguar = v (Nothing, False, False, False, False, False, False) "averiguar"
+averiguar = v ((Nothing, False, False, False, False, False, False), "averiguar")
 
 delinquir :: (HasVerbEnding a, HandlesIrregularPreterite a) => VerbHelper a
-delinquir = v (Nothing, False, False, False, False, False, False) "delinquir"
+delinquir = v ((Nothing, False, False, False, False, False, False), "delinquir")
 
 vencer :: (HasVerbEnding a, HandlesIrregularPreterite a) => VerbHelper a
-vencer = v (Nothing, False, False, False, False, False, False) "vencer"
+vencer = v ((Nothing, False, False, False, False, False, False), "vencer")
 
 proteger :: (HasVerbEnding a, HandlesIrregularPreterite a) => VerbHelper a
-proteger = v (Nothing, False, False, False, False, False, False) "proteger"
+proteger = v ((Nothing, False, False, False, False, False, False), "proteger")
 
 distinguir :: (HasVerbEnding a, HandlesIrregularPreterite a) => VerbHelper a
-distinguir = v (Nothing, False, False, False, False, False, False) "distinguir"
+distinguir =
+    v ((Nothing, False, False, False, False, False, False), "distinguir")
 
 construir :: (HasVerbEnding a, HandlesIrregularPreterite a) => VerbHelper a
-construir = v (Nothing, False, False, False, False, False, False) "construir"
+construir = v ((Nothing, False, False, False, False, False, False), "construir")
 
 argüir :: (HasVerbEnding a, HandlesIrregularPreterite a) => VerbHelper a
-argüir = v (Nothing, False, False, False, False, False, False) "argüir"
+argüir = v ((Nothing, False, False, False, False, False, False), "argüir")
 
 hablar :: (HasVerbEnding a, HandlesIrregularPreterite a) => VerbHelper a
-hablar = v (Nothing, False, False, False, False, False, False) "hablar"
+hablar = v ((Nothing, False, False, False, False, False, False), "hablar")
 
 correr :: (HasVerbEnding a, HandlesIrregularPreterite a) => VerbHelper a
-correr = v (Nothing, False, False, False, False, False, False) "correr"
+correr = v ((Nothing, False, False, False, False, False, False), "correr")
 
 caer :: (HasVerbEnding a, HandlesIrregularPreterite a) => VerbHelper a
-caer = v (Nothing, False, True, False, False, False, False) "caer"
+caer = v ((Nothing, False, True, False, False, False, False), "caer")
 
 leer :: (HasVerbEnding a, HandlesIrregularPreterite a) => VerbHelper a
-leer = v (Nothing, False, False, False, False, False, False) "leer"
+leer = v ((Nothing, False, False, False, False, False, False), "leer")
 
 oír :: (HasVerbEnding a, HandlesIrregularPreterite a) => VerbHelper a
-oír = v (Nothing, False, False, False, False, False, False) "oír"
+oír = v ((Nothing, False, False, False, False, False, False), "oír")
 
 liar :: (HasVerbEnding a, HandlesIrregularPreterite a) => VerbHelper a
-liar = v (Nothing, False, False, False, False, False, False) "liar"
+liar = v ((Nothing, False, False, False, False, False, False), "liar")
 
 ver :: (HasVerbEnding a, HandlesIrregularPreterite a) => VerbHelper a
-ver = v (Nothing, False, False, False, False, False, False) "ver"
+ver = v ((Nothing, False, False, False, False, False, False), "ver")
 
 bullir :: (HasVerbEnding a, HandlesIrregularPreterite a) => VerbHelper a
-bullir = v (Nothing, False, False, False, False, False, False) "bullir"
+bullir = v ((Nothing, False, False, False, False, False, False), "bullir")
 
 tañer :: (HasVerbEnding a, HandlesIrregularPreterite a) => VerbHelper a
-tañer = v (Nothing, False, False, False, False, False, False) "tañer"
+tañer = v ((Nothing, False, False, False, False, False, False), "tañer")
 
 pensar :: (HasVerbEnding a, HandlesIrregularPreterite a) => VerbHelper a
-pensar = v (Nothing, False, False, False, False, True, False) "pensar"
+pensar = v ((Nothing, False, False, False, False, True, False), "pensar")
 
 contar :: (HasVerbEnding a, HandlesIrregularPreterite a) => VerbHelper a
-contar = v (Nothing, False, False, False, False, True, False) "contar"
+contar = v ((Nothing, False, False, False, False, True, False), "contar")
 
 adquirir :: (HasVerbEnding a, HandlesIrregularPreterite a) => VerbHelper a
-adquirir = v (Nothing, False, False, False, False, True, False) "adquirir"
+adquirir = v ((Nothing, False, False, False, False, True, False), "adquirir")
 
 jugar :: (HasVerbEnding a, HandlesIrregularPreterite a) => VerbHelper a
-jugar = v (Nothing, False, False, False, False, True, False) "jugar"
+jugar = v ((Nothing, False, False, False, False, True, False), "jugar")
 
 oler :: (HasVerbEnding a, HandlesIrregularPreterite a) => VerbHelper a
-oler = v (Nothing, False, False, False, False, True, False) "oler"
+oler = v ((Nothing, False, False, False, False, True, False), "oler")
 
 errar :: (HasVerbEnding a, HandlesIrregularPreterite a) => VerbHelper a
-errar = v (Nothing, False, False, False, False, True, False) "errar"
+errar = v ((Nothing, False, False, False, False, True, False), "errar")
 
 avergonzar :: (HasVerbEnding a, HandlesIrregularPreterite a) => VerbHelper a
-avergonzar = v (Nothing, False, False, False, False, True, False) "avergonzar"
+avergonzar =
+    v ((Nothing, False, False, False, False, True, False), "avergonzar")
 
 pedir :: (HasVerbEnding a, HandlesIrregularPreterite a) => VerbHelper a
-pedir = v (Nothing, False, False, False, False, False, True) "pedir"
+pedir = v ((Nothing, False, False, False, False, False, True), "pedir")
 
 dormir :: (HasVerbEnding a, HandlesIrregularPreterite a) => VerbHelper a
-dormir = v (Nothing, False, False, False, False, True, True) "dormir"
+dormir = v ((Nothing, False, False, False, False, True, True), "dormir")
 
 sentir :: (HasVerbEnding a, HandlesIrregularPreterite a) => VerbHelper a
-sentir = v (Nothing, False, False, False, False, True, True) "sentir"
+sentir = v ((Nothing, False, False, False, False, True, True), "sentir")
 
 enviar :: (HasVerbEnding a, HandlesIrregularPreterite a) => VerbHelper a
-enviar = v (Nothing, False, False, False, True, False, False) "enviar"
+enviar = v ((Nothing, False, False, False, True, False, False), "enviar")
 
 aislar :: (HasVerbEnding a, HandlesIrregularPreterite a) => VerbHelper a
-aislar = v (Nothing, False, False, False, True, False, False) "aislar"
+aislar = v ((Nothing, False, False, False, True, False, False), "aislar")
 
 aunar :: (HasVerbEnding a, HandlesIrregularPreterite a) => VerbHelper a
-aunar = v (Nothing, False, False, False, True, False, False) "aunar"
+aunar = v ((Nothing, False, False, False, True, False, False), "aunar")
 
 descafeinar :: (HasVerbEnding a, HandlesIrregularPreterite a) => VerbHelper a
-descafeinar = v (Nothing, False, False, False, True, False, False) "descafeinar"
+descafeinar =
+    v ((Nothing, False, False, False, True, False, False), "descafeinar")
 
 conocer :: (HasVerbEnding a, HandlesIrregularPreterite a) => VerbHelper a
-conocer = v (Nothing, False, False, True, False, False, False) "conocer"
+conocer = v ((Nothing, False, False, True, False, False, False), "conocer")
 
 torcer :: (HasVerbEnding a, HandlesIrregularPreterite a) => VerbHelper a
-torcer = v (Nothing, False, False, False, False, True, False) "torcer"
+torcer = v ((Nothing, False, False, False, False, True, False), "torcer")
 
 asir :: (HasVerbEnding a, HandlesIrregularPreterite a) => VerbHelper a
-asir = v (Nothing, False, True, False, False, False, False) "asir"
+asir = v ((Nothing, False, True, False, False, False, False), "asir")
 
 -- NOTE:  Not all rules for this verb are currently supported!
 decir :: (HasVerbEnding a, HandlesIrregularPreterite a) => VerbHelper a
-decir = v (Nothing, True, True, False, False, False, True) "decir"
+decir = v ((Nothing, True, True, False, False, False, True), "decir")
 
 tener :: (HasVerbEnding a, HandlesIrregularPreterite a) => VerbHelper a
 tener =
     v
-        ( Just
-              ( True
-              , ((False, (Nothing, Left U)), Just (Nothing, Single (Regular V))))
-        , True
-        , True
-        , False
-        , False
-        , True
-        , False)
-        "tener"
+        ( ( Just
+                ( True
+                , ( (False, (Nothing, Left U))
+                  , Just (Nothing, Single (Regular V))))
+          , True
+          , True
+          , False
+          , False
+          , True
+          , False)
+        , "tener")
 
 salir :: (HasVerbEnding a, HandlesIrregularPreterite a) => VerbHelper a
-salir = v (Nothing, True, True, False, False, False, False) "salir"
+salir = v ((Nothing, True, True, False, False, False, False), "salir")
 
 -- NOTE:  Not all rules for this verb are currently supported!
 saber :: (HasVerbEnding a, HandlesIrregularPreterite a) => VerbHelper a
-saber = v (Nothing, True, False, False, False, False, False) "saber"
+saber = v ((Nothing, True, False, False, False, False, False), "saber")
 
 -- NOTE:  Not all rules for this verb are currently supported!
 poder :: (HasVerbEnding a, HandlesIrregularPreterite a) => VerbHelper a
-poder = v (Nothing, True, False, False, False, True, False) "poder"
+poder = v ((Nothing, True, False, False, False, True, False), "poder")
 
 -- NOTE:  Not all rules for this verb are currently supported!
 querer :: (HasVerbEnding a, HandlesIrregularPreterite a) => VerbHelper a
-querer = v (Nothing, True, False, False, False, True, False) "querer"
+querer = v ((Nothing, True, False, False, False, True, False), "querer")
 
 -- NOTE:  Not all rules for this verb are currently supported!
 hacer :: (HasVerbEnding a, HandlesIrregularPreterite a) => VerbHelper a
-hacer = v (Nothing, True, True, False, False, False, False) "hacer"
+hacer = v ((Nothing, True, True, False, False, False, False), "hacer")

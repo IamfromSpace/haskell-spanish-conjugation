@@ -16,6 +16,7 @@ module Linguistics.Types
     , Verb
     , Ending
     , Intermediate
+    , VerbConfig
     , Subject(..)
     , SubjectlessTense(..)
     , SubjectSensativeTense(..)
@@ -116,6 +117,9 @@ type Ending = (Core, [InnerSyllable], Maybe Coda)
 
 --TODO: This should mabye be a PointyList in the middle
 type Intermediate = (VerbType, Maybe Onset, [(Core, InnerCluster)], Ending)
+
+type VerbConfig
+     = (Maybe (Bool, (Core, InnerCluster)), Bool, Bool, Bool, Bool, Bool, Bool)
 
 data Subject
     = Yo

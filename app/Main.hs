@@ -5,16 +5,12 @@ module Main where
 import Anki.Collections.Default (CardData, initCol, insertCards)
 import Anki.Init (analyzeAndIndex, createTables)
 import Control.Applicative (liftA2)
-import Control.Monad ((>=>))
 import Data.Char (toLower)
 import Database.SQLite.Simple (close, execute_, open)
 import Linguistics.Conjugate
-import Linguistics.FullWord
-import qualified Linguistics.Parsers as LP
 import Linguistics.Render
 import Linguistics.Types
-import qualified Parser as P
-import Utils (swap, withLeft)
+import Utils (swap)
 
 describe :: SubjectSensativeTense -> String
 describe Conditional = "hoy si..."
@@ -44,35 +40,12 @@ conjugateToCardData infinitive (t, s) conjugated =
        , infinitive ++ " -- " ++ show tense
        , [infinitive, tense, subject, "simple"])
 
-type VerbConfig
-     = (Maybe (Bool, (Core, InnerCluster)), Bool, Bool, Bool, Bool, Bool, Bool)
-
---This should just really be the definition of toVerb
-toVerb' :: FullWord -> Either String Verb
-toVerb' = withLeft "word is not a verb!" . toVerb
-
-parseVerb :: String -> Either String Verb
-parseVerb = (fmap snd . P.runParser LP.wordOnly) >=> toVerb'
-
---This should just really be the definition of conjugate
 conjugate' ::
-       (VerbConfig, Verb)
-    -> (SubjectSensativeTense, Subject)
-    -> Either String FullWord
-conjugate' = fmap (fmap (withLeft "could not conjugate")) (uncurry conjugate)
-
-conjugate'' ::
-       (VerbConfig, String)
-    -> (SubjectSensativeTense, Subject)
-    -> Either String FullWord
-conjugate'' fwv st = swap (fmap parseVerb fwv) >>= flip conjugate' st
-
-conjugate''' ::
        (VerbConfig, String)
     -> (SubjectSensativeTense, Subject)
     -> Either String CardData
-conjugate''' (vc, str) st =
-    fmap (conjugateToCardData str st . render) (conjugate'' (vc, str) st)
+conjugate' (vc, str) st =
+    fmap (conjugateToCardData str st . render) (conjugate (vc, str) st)
 
 allTenses :: [(SubjectSensativeTense, Subject)]
 allTenses =
@@ -90,7 +63,7 @@ allTenses =
 
 configuredVerbToCardDatas :: (VerbConfig, String) -> Either String [CardData]
 configuredVerbToCardDatas stringVerb =
-    swap (fmap (conjugate''' stringVerb) allTenses)
+    swap (fmap (conjugate' stringVerb) allTenses)
 
 mkCardDatas :: [(VerbConfig, String)] -> Either String [CardData]
 mkCardDatas = foldr (liftA2 (++) . configuredVerbToCardDatas) (Right [])
