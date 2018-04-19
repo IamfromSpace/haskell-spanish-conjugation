@@ -41,7 +41,7 @@ conjugateToCardData infinitive (t, s) conjugated =
        , [infinitive, tense, subject, "simple"])
 
 conjugate' ::
-       (VerbConfig, String)
+       (VerbConfig InnerSyllable', String)
     -> (SubjectSensativeTense, Subject)
     -> Either String CardData
 conjugate' (vc, str) st =
@@ -61,14 +61,15 @@ allTenses =
         ]
         [Yo, Tú, Usted, Él, Nosotros, Ustedes, Ellos]
 
-configuredVerbToCardDatas :: (VerbConfig, String) -> Either String [CardData]
+configuredVerbToCardDatas ::
+       (VerbConfig InnerSyllable', String) -> Either String [CardData]
 configuredVerbToCardDatas stringVerb =
     swap (fmap (conjugate' stringVerb) allTenses)
 
-mkCardDatas :: [(VerbConfig, String)] -> Either String [CardData]
+mkCardDatas :: [(VerbConfig InnerSyllable', String)] -> Either String [CardData]
 mkCardDatas = foldr (liftA2 (++) . configuredVerbToCardDatas) (Right [])
 
-verbs :: [(VerbConfig, String)]
+verbs :: [(VerbConfig InnerSyllable', String)]
 verbs =
     [ ((Nothing, False, False, False, False, False, False), "aprender")
     , ((Nothing, False, False, False, False, False, False), "argüir")

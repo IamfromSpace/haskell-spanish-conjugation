@@ -9,7 +9,7 @@ module Linguistics.FullWord
 import Control.Arrow as Arrow
 import Linguistics.Types
 
-splitAtLastCore :: Core -> [InnerSyllable] -> (Core, [(Core, InnerCluster)])
+splitAtLastCore :: Core -> [InnerSyllable] -> (Core, [InnerSyllable'])
 splitAtLastCore =
     let go built a [] = (a, built)
         go built a ((cluster, b):t) = go ((a, cluster) : built) b t

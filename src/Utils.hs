@@ -57,3 +57,12 @@ instance Monoid a => Swap [] (Either a) b where
                                  Right _ -> Left x)
                     Right x -> go t (fmap ((:) x) built)
         in flip go (Right [])
+
+instance Swap Maybe (Either a) b where
+    swap m =
+        case m of
+            Just e ->
+                case e of
+                    Left x -> Left x
+                    Right x -> Right (Just x)
+            Nothing -> Right Nothing

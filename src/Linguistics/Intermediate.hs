@@ -55,7 +55,7 @@ toIntermediate (vt, mo, coreClusters_0, mhv1) ending =
                 else (mhv1 <|> mhv2, coreClusters_0)
     in (vt, mo, coreClusters1, ((isStressed, (mhv, e)), iss, coda))
 
-joinStemList :: Core -> [(Core, InnerCluster)] -> (Core, [InnerSyllable])
+joinStemList :: Core -> [InnerSyllable'] -> (Core, [InnerSyllable])
 joinStemList =
     let go built core [] = (core, built)
         go built core0 ((core1, cluster):iss) =
@@ -316,19 +316,17 @@ shortenedInfinitives intermediate =
                             _ -> Nothing
             _ -> Nothing)
 
-setPenultimateSyllable ::
-       (Core, InnerCluster) -> Intermediate -> Maybe Intermediate
+setPenultimateSyllable :: InnerSyllable' -> Intermediate -> Maybe Intermediate
 setPenultimateSyllable new intermediate =
     if has (_3 . _head) intermediate
         then Just $ set (_3 . _head) new intermediate
         else Nothing
 
-appendPenultimateSyllable ::
-       (Core, InnerCluster) -> Intermediate -> Intermediate
+appendPenultimateSyllable :: InnerSyllable' -> Intermediate -> Intermediate
 appendPenultimateSyllable new = over _3 (new :)
 
 updatePenultimateSyllable ::
-       Bool -> (Core, InnerCluster) -> Intermediate -> Maybe Intermediate
+       Bool -> InnerSyllable' -> Intermediate -> Maybe Intermediate
 updatePenultimateSyllable shouldReplace syllable =
     if shouldReplace
         then setPenultimateSyllable syllable

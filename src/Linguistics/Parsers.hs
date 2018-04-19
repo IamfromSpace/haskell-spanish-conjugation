@@ -34,6 +34,7 @@ module Linguistics.Parsers
     , onset
     , coda
     , innerSyllable
+    , onlyInnerSyllable'
     , word
     , ending
     , wordOnly
@@ -191,6 +192,19 @@ onset
 coda :: Parser String Coda
 coda = fmap (Coda True) (consonant <* char 's') <|> fmap (Coda False) consonant
 
+onsetNoCoda :: Parser String (Maybe a, Onset)
+onsetNoCoda = fmap ((,) Nothing) onset
+
+onsetAndCoda :: Parser String (Maybe Coda, Onset)
+onsetAndCoda = liftA2 (,) (fmap Just coda) onset
+
+consonantAndS :: Parser String (Maybe Coda, Onset)
+consonantAndS =
+    liftA2
+        (const . flip (,) (Single (Regular S)) . Just . Coda False)
+        consonant
+        (char 's')
+
 innerSyllable :: Parser String InnerSyllable
 innerSyllable
   -- precedence rules here get a little strange
@@ -202,17 +216,17 @@ innerSyllable
  =
     let optionalPThenCore :: Parser String b -> Parser String (Maybe b, Core)
         optionalPThenCore = flip (liftA2 (,)) core . optional
-        onsetNoCoda :: Parser String (Maybe a, Onset)
-        onsetNoCoda = fmap ((,) Nothing) onset
-        onsetAndCoda :: Parser String (Maybe Coda, Onset)
-        onsetAndCoda = liftA2 (,) (fmap Just coda) onset
-        consonantAndS =
-            liftA2
-                (const . flip (,) (Single (Regular S)) . Just . Coda False)
-                consonant
-                (char 's')
     in optionalPThenCore onsetNoCoda <|> optionalPThenCore onsetAndCoda <|>
        optionalPThenCore consonantAndS
+
+onlyInnerSyllable' :: Parser String InnerSyllable'
+onlyInnerSyllable' =
+    liftA2
+        (,)
+        core
+        (optional
+             (onsetNoCoda <* terminal <|> onsetAndCoda <* terminal <|>
+              consonantAndS <* terminal))
 
 word :: Parser String FullWord
 word = liftA4 (,,,) (optional onset) core (many innerSyllable) (optional coda)

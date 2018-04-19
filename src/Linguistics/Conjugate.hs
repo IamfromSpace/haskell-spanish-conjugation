@@ -5,6 +5,7 @@ module Linguistics.Conjugate
     , CanConjugate
     ) where
 
+import Control.Lens
 import Control.Monad ((>=>))
 import Linguistics.Diphthongizing
 import Linguistics.FullWord
@@ -25,7 +26,7 @@ class CanConjugate a where
         -> b
         -> Either String FullWord
 
-instance CanConjugate (VerbConfig, Verb) where
+instance CanConjugate (VerbConfig InnerSyllable', Verb) where
     conjugate ((irregularPreterite, hasIrregularInfinitives, isYoGoVerb, isZcVerb, isDiphthongBreaking, isDiphthongizing, isVowelRaising), verb@(vt, _, _, _)) tense =
         let ending = getEnding vt tense
             intermediate =
@@ -82,8 +83,22 @@ instance CanConjugate (VerbConfig, Verb) where
                     mIntermediate'''''''
         in withLeft "could not conjugate" fullWord
 
-instance CanConjugate (VerbConfig, String) where
+instance CanConjugate (VerbConfig InnerSyllable', String) where
     conjugate fwv st =
         let toVerb' = withLeft "word is not a verb!" . toVerb
             parseVerb = (fmap snd . P.runParser LP.wordOnly) >=> toVerb'
         in swap (fmap parseVerb fwv) >>= flip conjugate st
+
+instance CanConjugate (VerbConfig String, String) where
+    conjugate fwv st =
+        let parse :: String -> Either String InnerSyllable'
+            parse = fmap snd . P.runParser LP.onlyInnerSyllable'
+            getParsedIrregularPreteriteData
+             -- Grab the irregular preterite data with view,
+             -- then fmap in, parse, and then swap the Either to the top
+             = swap . fmap (swap . fmap parse) . view (_1 . _1)
+            withParsedConfig
+             -- update the irregular preterite, with the whole resulting
+             -- config inside the Either from the parse.
+             = flip (set (_1 . _1)) fwv <$> getParsedIrregularPreteriteData fwv
+        in withParsedConfig >>= flip conjugate st

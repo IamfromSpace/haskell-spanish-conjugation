@@ -10,11 +10,7 @@ import Linguistics.Types
 
 class HandlesIrregularPreterite a where
     handleIrregularPreterite ::
-           a
-        -> Bool
-        -> (Core, InnerCluster)
-        -> Intermediate
-        -> Maybe Intermediate
+           a -> Bool -> InnerSyllable' -> Intermediate -> Maybe Intermediate
 
 instance HandlesIrregularPreterite (SubjectSensativeTense, Subject) where
     handleIrregularPreterite (Preterite, Yo) shouldReplace syllable =

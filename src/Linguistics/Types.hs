@@ -12,6 +12,7 @@ module Linguistics.Types
     , VerbType(..)
     , InnerCluster
     , InnerSyllable
+    , InnerSyllable'
     , FullWord
     , Verb
     , Ending
@@ -109,17 +110,18 @@ type InnerCluster = Maybe (Maybe Coda, Onset)
 
 type InnerSyllable = (InnerCluster, Core)
 
+type InnerSyllable' = (Core, InnerCluster)
+
 type FullWord = (Maybe Onset, Core, [InnerSyllable], Maybe Coda)
 
-type Verb = (VerbType, Maybe Onset, [(Core, InnerCluster)], Maybe HighVowel)
+type Verb = (VerbType, Maybe Onset, [InnerSyllable'], Maybe HighVowel)
 
 type Ending = (Core, [InnerSyllable], Maybe Coda)
 
 --TODO: This should mabye be a PointyList in the middle
-type Intermediate = (VerbType, Maybe Onset, [(Core, InnerCluster)], Ending)
+type Intermediate = (VerbType, Maybe Onset, [InnerSyllable'], Ending)
 
-type VerbConfig
-     = (Maybe (Bool, (Core, InnerCluster)), Bool, Bool, Bool, Bool, Bool, Bool)
+type VerbConfig a = (Maybe (Bool, a), Bool, Bool, Bool, Bool, Bool, Bool)
 
 data Subject
     = Yo

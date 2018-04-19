@@ -275,7 +275,7 @@ type VerbHelper a = a -> String
 
 -- This is not total, but that's actually perfect for our tests
 v :: (HasVerbEnding a, HandlesIrregularPreterite a)
-  => (VerbConfig, String)
+  => (VerbConfig String, String)
   -> VerbHelper a
 v x tense =
     case conjugate x tense of
@@ -395,19 +395,7 @@ decir :: (HasVerbEnding a, HandlesIrregularPreterite a) => VerbHelper a
 decir = v ((Nothing, True, True, False, False, False, True), "decir")
 
 tener :: (HasVerbEnding a, HandlesIrregularPreterite a) => VerbHelper a
-tener =
-    v
-        ( ( Just
-                ( True
-                , ( (False, (Nothing, Left U))
-                  , Just (Nothing, Single (Regular V))))
-          , True
-          , True
-          , False
-          , False
-          , True
-          , False)
-        , "tener")
+tener = v ((Just (True, "uv"), True, True, False, False, True, False), "tener")
 
 salir :: (HasVerbEnding a, HandlesIrregularPreterite a) => VerbHelper a
 salir = v ((Nothing, True, True, False, False, False, False), "salir")
