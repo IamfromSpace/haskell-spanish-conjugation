@@ -230,12 +230,11 @@ main =
                     it "for the preterite Nosotros (tener)" $
                         tener (Preterite, Nosotros) `shouldBe` "tuvimos"
                     it "for the imperfect subjunctive Nosotros (tener)" $
-                        tener (ImperfectSubjunctive, Nosotros) `shouldBe`
-                        "tuviera"
+                        tener (ImperfectSubjunctive, Yo) `shouldBe` "tuviera"
                     it "for the preterite Nosotros (hacer)" $
-                        hacer (Preterite, Nosotros) `shouldBe` "hacimos"
+                        hacer (Preterite, Nosotros) `shouldBe` "hicimos"
                     it "for the imperfect subjunctive Nosotros (hacer)" $
-                        hacer (ImperfectSubjunctive, Yo) `shouldBe` "haciera"
+                        hacer (ImperfectSubjunctive, Yo) `shouldBe` "hiciera"
                 -- TODO: Andar -> Anduviste (note the change of verb type/ending)
                 -- TODO: Estar -> Estuviste (for appending style, but need -ar fix)
             describe "misc" $ do
