@@ -14,9 +14,9 @@ class HandlesIrregularPreterite a where
 
 instance HandlesIrregularPreterite (SubjectSensativeTense, Subject) where
     handleIrregularPreterite (Preterite, Yo) shouldReplace syllable =
-        updatePenultimateSyllable shouldReplace syllable . setSimpleEnd O
-    handleIrregularPreterite (Preterite, Usted) shouldReplace syllable =
         updatePenultimateSyllable shouldReplace syllable . setSimpleEnd E
+    handleIrregularPreterite (Preterite, Usted) shouldReplace syllable =
+        updatePenultimateSyllable shouldReplace syllable . setSimpleEnd O
     handleIrregularPreterite (Preterite, Él) a b =
         handleIrregularPreterite (Preterite, Usted) a b
     handleIrregularPreterite (Preterite, _) a b = updatePenultimateSyllable a b

@@ -208,7 +208,7 @@ main =
                 it "should drop -ec in the future" $
                     decir (Future, Nosotros) `shouldBe` "diremos"
                 it "should not drop the e between br if there's a diphthong" $
-                    saber (Preterite, Ustedes) `shouldBe` "sabieron"
+                    saber (Preterite, Ustedes) `shouldBe` "supieron"
                 it "should not drop the i between lr if there's a diphthong" $
                     salir (Preterite, Ustedes) `shouldBe` "salieron"
                 it
@@ -217,12 +217,27 @@ main =
                 it "should not drop the e if there is no r in the ending" $
                     saber (Present, Nosotros) `shouldBe` "sabemos"
             describe "irregular preterite" $ do
-                it "should be tuvo" $ tener (Preterite, Yo) `shouldBe` "tuvo"
-                it "should be tuve" $ tener (Preterite, Usted) `shouldBe` "tuve"
-                it "should be tuvimos" $
-                    tener (Preterite, Nosotros) `shouldBe` "tuvimos"
-                it "should be tuviera" $
-                    tener (ImperfectSubjunctive, Yo) `shouldBe` "tuviera"
+                describe "should change stem and irregular ending" $ do
+                    it "for the preterite yo (tener)" $
+                        tener (Preterite, Yo) `shouldBe` "tuve"
+                    it "for the preterite yo (hacer)" $
+                        hacer (Preterite, Yo) `shouldBe` "hice"
+                    it "for the preterite usted (tener)" $
+                        tener (Preterite, Usted) `shouldBe` "tuvo"
+                    it "for the preterite usted (hacer)" $
+                        hacer (Preterite, Usted) `shouldBe` "hizo"
+                describe "should change stem only" $ do
+                    it "for the preterite Nosotros (tener)" $
+                        tener (Preterite, Nosotros) `shouldBe` "tuvimos"
+                    it "for the imperfect subjunctive Nosotros (tener)" $
+                        tener (ImperfectSubjunctive, Nosotros) `shouldBe`
+                        "tuviera"
+                    it "for the preterite Nosotros (hacer)" $
+                        hacer (Preterite, Nosotros) `shouldBe` "hacimos"
+                    it "for the imperfect subjunctive Nosotros (hacer)" $
+                        hacer (ImperfectSubjunctive, Yo) `shouldBe` "haciera"
+                -- TODO: Andar -> Anduviste (note the change of verb type/ending)
+                -- TODO: Estar -> Estuviste (for appending style, but need -ar fix)
             describe "misc" $ do
                 it "should not start with a semivowel i" $
                     oler (Present, Yo) `shouldBe` "huelo"
@@ -390,9 +405,9 @@ torcer = v ((Nothing, False, False, False, False, True, False), "torcer")
 asir :: (HasVerbEnding a, HandlesIrregularPreterite a) => VerbHelper a
 asir = v ((Nothing, False, True, False, False, False, False), "asir")
 
--- NOTE:  Not all rules for this verb are currently supported!
+-- NOTE:  Strong Past Participle is not yet supported!
 decir :: (HasVerbEnding a, HandlesIrregularPreterite a) => VerbHelper a
-decir = v ((Nothing, True, True, False, False, False, True), "decir")
+decir = v ((Just (True, "ij"), True, True, False, False, False, True), "decir")
 
 tener :: (HasVerbEnding a, HandlesIrregularPreterite a) => VerbHelper a
 tener = v ((Just (True, "uv"), True, True, False, False, True, False), "tener")
@@ -402,16 +417,16 @@ salir = v ((Nothing, True, True, False, False, False, False), "salir")
 
 -- NOTE:  Not all rules for this verb are currently supported!
 saber :: (HasVerbEnding a, HandlesIrregularPreterite a) => VerbHelper a
-saber = v ((Nothing, True, False, False, False, False, False), "saber")
+saber =
+    v ((Just (True, "up"), True, False, False, False, False, False), "saber")
 
--- NOTE:  Not all rules for this verb are currently supported!
 poder :: (HasVerbEnding a, HandlesIrregularPreterite a) => VerbHelper a
-poder = v ((Nothing, True, False, False, False, True, False), "poder")
+poder = v ((Just (True, "ud"), True, False, False, False, True, False), "poder")
 
--- NOTE:  Not all rules for this verb are currently supported!
 querer :: (HasVerbEnding a, HandlesIrregularPreterite a) => VerbHelper a
-querer = v ((Nothing, True, False, False, False, True, False), "querer")
+querer =
+    v ((Just (True, "is"), True, False, False, False, True, False), "querer")
 
--- NOTE:  Not all rules for this verb are currently supported!
+-- NOTE:  Strong Past Participle is not yet supported!
 hacer :: (HasVerbEnding a, HandlesIrregularPreterite a) => VerbHelper a
-hacer = v ((Nothing, True, True, False, False, False, False), "hacer")
+hacer = v ((Just (True, "iz"), True, True, False, False, False, False), "hacer")
