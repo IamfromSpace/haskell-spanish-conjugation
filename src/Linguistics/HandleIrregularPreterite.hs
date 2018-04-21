@@ -1,28 +1,28 @@
 {-# LANGUAGE FlexibleInstances #-}
 
 module Linguistics.HandleIrregularPreterite
-    ( HandlesIrregularPreterite
-    , handleIrregularPreterite
+    ( PossibleIrregularPreteriteEffect
+    , getIrregularPreteriteEffect
     ) where
 
-import Linguistics.Intermediate
 import Linguistics.Types
 
-class HandlesIrregularPreterite a where
-    handleIrregularPreterite ::
-           a -> Bool -> InnerSyllable' -> Intermediate -> Maybe Intermediate
+makeSimpleEnding :: LowVowel -> Ending
+makeSimpleEnding lowVowel =
+    ((False, (Nothing, Right (lowVowel, Nothing))), [], Nothing)
 
-instance HandlesIrregularPreterite (SubjectSensativeTense, Subject) where
-    handleIrregularPreterite (Preterite, Yo) shouldReplace syllable =
-        updatePenultimateSyllable shouldReplace syllable . setSimpleEnd E
-    handleIrregularPreterite (Preterite, Usted) shouldReplace syllable =
-        updatePenultimateSyllable shouldReplace syllable . setSimpleEnd O
-    handleIrregularPreterite (Preterite, Él) a b =
-        handleIrregularPreterite (Preterite, Usted) a b
-    handleIrregularPreterite (Preterite, _) a b = updatePenultimateSyllable a b
-    handleIrregularPreterite (ImperfectSubjunctive, _) a b =
-        updatePenultimateSyllable a b
-    handleIrregularPreterite _ _ _ = return
+class PossibleIrregularPreteriteEffect a where
+    getIrregularPreteriteEffect :: a -> IrregularPreteriteEffect
 
-instance HandlesIrregularPreterite SubjectlessTense where
-    handleIrregularPreterite _ _ _ = return
+instance PossibleIrregularPreteriteEffect (SubjectSensativeTense, Subject) where
+    getIrregularPreteriteEffect (Preterite, Yo) =
+        Just (Just (makeSimpleEnding E))
+    getIrregularPreteriteEffect (Preterite, Usted) =
+        Just (Just (makeSimpleEnding O))
+    getIrregularPreteriteEffect (Preterite, Él) = Just Nothing
+    getIrregularPreteriteEffect (Preterite, _) = Just Nothing
+    getIrregularPreteriteEffect (ImperfectSubjunctive, _) = Just Nothing
+    getIrregularPreteriteEffect _ = Nothing
+
+instance PossibleIrregularPreteriteEffect SubjectlessTense where
+    getIrregularPreteriteEffect _ = Nothing

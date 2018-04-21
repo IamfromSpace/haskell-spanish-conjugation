@@ -18,6 +18,7 @@ module Linguistics.Types
     , Ending
     , Intermediate
     , VerbConfig
+    , IrregularPreteriteEffect
     , Subject(..)
     , SubjectlessTense(..)
     , SubjectSensativeTense(..)
@@ -122,6 +123,8 @@ type Ending = (Core, [InnerSyllable], Maybe Coda)
 type Intermediate = (VerbType, Maybe Onset, [InnerSyllable'], Ending)
 
 type VerbConfig a = (Maybe (Bool, a), Bool, Bool, Bool, Bool, Bool, Bool)
+
+type IrregularPreteriteEffect = Maybe (Maybe Ending)
 
 data Subject
     = Yo

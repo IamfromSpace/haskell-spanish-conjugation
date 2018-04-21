@@ -6,7 +6,8 @@ module Linguistics.Conjugate
     ) where
 
 import Control.Lens
-import Control.Monad ((>=>))
+import Control.Monad ((>=>), join)
+import Data.Maybe (fromMaybe)
 import Linguistics.Diphthongizing
 import Linguistics.FullWord
 import Linguistics.HandleIrregularPreterite
@@ -16,19 +17,27 @@ import Linguistics.Types
 import Linguistics.VerbEnding
 import Linguistics.VowelRaising
 import qualified Parser as P
-import Utils (swap, withLeft)
+import Utils (($>), swap, withLeft)
 
 -- Has to be restricted to a string?
 class CanConjugate a where
     conjugate ::
-           (HasVerbEnding b, HandlesIrregularPreterite b)
+           (HasVerbEnding b, PossibleIrregularPreteriteEffect b)
         => a
         -> b
         -> Either String FullWord
 
 instance CanConjugate (VerbConfig InnerSyllable', Verb) where
     conjugate ((irregularPreterite, hasIrregularInfinitives, isYoGoVerb, isZcVerb, isDiphthongBreaking, isDiphthongizing, isVowelRaising), verb@(vt, _, _, _)) tense =
-        let ending = getEnding vt tense
+        let irregularPreteriteEffect =
+                irregularPreterite *> getIrregularPreteriteEffect tense
+            -- all verbs with an irregular preterite in an affected tense
+            -- use ER endings (ER/IR are the same in affected tenses)
+            verbType = fromMaybe vt (irregularPreteriteEffect $> ER)
+            -- we use the expected ending, unless there are irregular preterite effects
+            ending =
+                getEnding verbType tense `fromMaybe`
+                join irregularPreteriteEffect
             intermediate =
                 preventUirNonIDiphthongization (toIntermediate verb ending)
             willYoGo = isYoGoVerb && couldYoGo intermediate
@@ -64,10 +73,10 @@ instance CanConjugate (VerbConfig InnerSyllable', Verb) where
                     then mIntermediate'''' >>= shortenedInfinitives
                     else mIntermediate''''
             mIntermediate'''''' =
-                case irregularPreterite of
+                case irregularPreterite <* irregularPreteriteEffect of
                     Just (shouldReplace, syllable) ->
                         mIntermediate''''' >>=
-                        handleIrregularPreterite tense shouldReplace syllable
+                        updatePenultimateSyllable shouldReplace syllable
                     Nothing -> mIntermediate'''''
             mIntermediate''''''' =
                 fmap
