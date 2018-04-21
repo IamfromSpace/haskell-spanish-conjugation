@@ -41,7 +41,7 @@ conjugateToCardData infinitive (t, s) conjugated =
        , [infinitive, tense, subject, "simple"])
 
 conjugate' ::
-       (VerbConfig InnerSyllable', String)
+       (VerbConfig String, String)
     -> (SubjectSensativeTense, Subject)
     -> Either String CardData
 conjugate' (vc, str) st =
@@ -62,14 +62,14 @@ allTenses =
         [Yo, Tú, Usted, Él, Nosotros, Ustedes, Ellos]
 
 configuredVerbToCardDatas ::
-       (VerbConfig InnerSyllable', String) -> Either String [CardData]
+       (VerbConfig String, String) -> Either String [CardData]
 configuredVerbToCardDatas stringVerb =
     swap (fmap (conjugate' stringVerb) allTenses)
 
-mkCardDatas :: [(VerbConfig InnerSyllable', String)] -> Either String [CardData]
+mkCardDatas :: [(VerbConfig String, String)] -> Either String [CardData]
 mkCardDatas = foldr (liftA2 (++) . configuredVerbToCardDatas) (Right [])
 
-verbs :: [(VerbConfig InnerSyllable', String)]
+verbs :: [(VerbConfig String, String)]
 verbs =
     [ ((Nothing, False, False, False, False, False, False), "aprender")
     , ((Nothing, False, False, False, False, False, False), "argüir")
@@ -109,6 +109,10 @@ verbs =
     , ((Nothing, False, True, False, False, False, False), "asir")
     , ((Nothing, False, True, False, False, False, False), "caer")
     , ((Nothing, True, True, False, False, False, False), "salir")
+    , ((Just (True, "uv"), True, True, False, False, True, False), "tener")
+    , ((Just (True, "ud"), True, False, False, False, True, False), "poder")
+    , ((Just (True, "is"), True, False, False, False, True, False), "querer")
+    , ((Just (False, "uv"), False, False, False, False, False, False), "andar")
     ]
 
 newDbWithCards :: String -> [CardData] -> IO ()
