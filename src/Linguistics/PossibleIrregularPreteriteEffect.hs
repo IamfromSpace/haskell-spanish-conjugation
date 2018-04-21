@@ -1,6 +1,6 @@
 {-# LANGUAGE FlexibleInstances #-}
 
-module Linguistics.HandleIrregularPreterite
+module Linguistics.PossibleIrregularPreteriteEffect
     ( PossibleIrregularPreteriteEffect
     , getIrregularPreteriteEffect
     ) where

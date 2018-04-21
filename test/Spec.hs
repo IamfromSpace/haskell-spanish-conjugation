@@ -5,8 +5,8 @@ import Test.Hspec.Runner (hspec)
 import Control.Applicative
 import Data.Maybe (isJust)
 import Linguistics.Conjugate
-import Linguistics.HandleIrregularPreterite
 import Linguistics.Parsers (wordOnly)
+import Linguistics.PossibleIrregularPreteriteEffect
 import Linguistics.Render
 import Linguistics.Types
 import Linguistics.VerbEnding

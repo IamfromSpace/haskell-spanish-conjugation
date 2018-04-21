@@ -10,9 +10,9 @@ import Control.Monad ((>=>), join)
 import Data.Maybe (fromMaybe)
 import Linguistics.Diphthongizing
 import Linguistics.FullWord
-import Linguistics.HandleIrregularPreterite
 import Linguistics.Intermediate
 import qualified Linguistics.Parsers as LP
+import Linguistics.PossibleIrregularPreteriteEffect
 import Linguistics.Types
 import Linguistics.VerbEnding
 import Linguistics.VowelRaising
