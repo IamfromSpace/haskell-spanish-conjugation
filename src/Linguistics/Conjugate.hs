@@ -3,8 +3,6 @@
 module Linguistics.Conjugate
     ( conjugate
     , CanConjugate
-    , PossiblePastParticiple
-    , isPastParticiple
     ) where
 
 import Control.Lens
@@ -14,33 +12,15 @@ import Linguistics.Diphthongizing
 import Linguistics.FullWord
 import Linguistics.Intermediate
 import qualified Linguistics.Parsers as LP
-import Linguistics.PossibleIrregularPreteriteEffect
+import Linguistics.Tense
 import Linguistics.Types
-import Linguistics.VerbEnding
 import Linguistics.VowelRaising
 import qualified Parser as P
 import Utils (($>), ifAppA, maybeUnit, swap, withLeft)
 
-class PossiblePastParticiple a where
-    isPastParticiple :: a -> Bool
-
-instance PossiblePastParticiple (SubjectSensativeTense, Subject) where
-    isPastParticiple _ = False
-
-instance PossiblePastParticiple SubjectlessTense where
-    isPastParticiple PastParticiple = True
-    isPastParticiple _ = False
-
 -- Has to be restricted to a string?
 class CanConjugate a where
-    conjugate ::
-           ( HasVerbEnding b
-           , PossibleIrregularPreteriteEffect b
-           , PossiblePastParticiple b
-           )
-        => a
-        -> b
-        -> Either String FullWord
+    conjugate :: Tense b => a -> b -> Either String FullWord
 
 instance CanConjugate (VerbConfig FullWord InnerSyllable', Verb) where
     conjugate ((irregularPastParticiple, irregularPreterite, hasIrregularInfinitives, isYoGoVerb, isZcVerb, isDiphthongBreaking, isDiphthongizing, isVowelRaising), verb@(vt, _, _, _)) tense =

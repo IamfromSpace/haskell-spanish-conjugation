@@ -1,16 +1,24 @@
 {-# LANGUAGE FlexibleInstances #-}
 
-module Linguistics.VerbEnding
-    ( getEnding
-    , HasVerbEnding
+module Linguistics.Tense
+    ( Tense
+    , isPastParticiple
+    , getEnding
+    , getIrregularPreteriteEffect
     ) where
 
 import Linguistics.Parsers (endingOnly)
 import Linguistics.Types
 import Parser
 
+makeSimpleEnding :: LowVowel -> Ending
+makeSimpleEnding lowVowel =
+    ((False, (Nothing, Right (lowVowel, Nothing))), [], Nothing)
+
 class Show a =>
-      HasVerbEnding a where
+      Tense a where
+    isPastParticiple :: a -> Bool
+    getIrregularPreteriteEffect :: a -> IrregularPreteriteEffect
     getEnding :: VerbType -> a -> Ending
     -- This is not a total function, but since getEnding' can only
     -- return valid parseable endings, a failed parse here is
@@ -29,7 +37,16 @@ class Show a =>
                      show vt ++ " - " ++ show a ++ ".")
     getEnding' :: VerbType -> a -> String
 
-instance HasVerbEnding (SubjectSensativeTense, Subject) where
+instance Tense (SubjectSensativeTense, Subject) where
+    isPastParticiple _ = False
+    getIrregularPreteriteEffect (Preterite, Yo) =
+        Just (Just (makeSimpleEnding E))
+    getIrregularPreteriteEffect (Preterite, Usted) =
+        Just (Just (makeSimpleEnding O))
+    getIrregularPreteriteEffect (Preterite, Él) = Just Nothing
+    getIrregularPreteriteEffect (Preterite, _) = Just Nothing
+    getIrregularPreteriteEffect (ImperfectSubjunctive, _) = Just Nothing
+    getIrregularPreteriteEffect _ = Nothing
     getEnding' x (y, Él) = getEnding' x (y, Usted)
     getEnding' x (y, Ellos) = getEnding' x (y, Ustedes)
     getEnding' AR (Imperfect, Tú) = "abas"
@@ -82,7 +99,10 @@ instance HasVerbEnding (SubjectSensativeTense, Subject) where
     getEnding' _ (ImperfectSubjunctive, Ustedes) = "ieran"
     getEnding' _ (ImperfectSubjunctive, _) = "iera"
 
-instance HasVerbEnding SubjectlessTense where
+instance Tense SubjectlessTense where
+    isPastParticiple PastParticiple = True
+    isPastParticiple _ = False
+    getIrregularPreteriteEffect _ = Nothing
     getEnding' AR Infinitive = "ar"
     getEnding' AR PastParticiple = "ado"
     getEnding' AR PresentParticiple = "ando"
