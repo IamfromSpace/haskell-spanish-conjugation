@@ -248,6 +248,15 @@ main =
                         hacer (Present, Usted) `shouldBe` "hace"
                     it "andar unaffected" $
                         andar (Present, Usted) `shouldBe` "anda"
+            describe "strong past participles" $ do
+                it "should be used for decir" $
+                    decir PastParticiple `shouldBe` "dicho"
+                it "should be used for hacer" $
+                    hacer PastParticiple `shouldBe` "hecho"
+                it "should not be used for tener" $
+                    tener PastParticiple `shouldBe` "tenido"
+                it "should not be used for andar" $
+                    andar PastParticiple `shouldBe` "andado"
             describe "misc" $ do
                 it "should not start with a semivowel i" $
                     oler (Present, Yo) `shouldBe` "huelo"
