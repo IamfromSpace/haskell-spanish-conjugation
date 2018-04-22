@@ -7,6 +7,7 @@ module Utils
     , mHead
     , withLeft
     , swap
+    , ifAppA
     ) where
 
 ($>) :: Functor f => f a -> b -> f b
@@ -21,6 +22,12 @@ liftA4 ::
     -> a e
     -> a f
 liftA4 f a0 a1 a2 a3 = f <$> a0 <*> a1 <*> a2 <*> a3
+
+ifAppA :: Applicative a => (b -> a b) -> Bool -> b -> a b
+ifAppA f bool =
+    if bool
+        then f
+        else pure
 
 swapTuple :: (a, (b, c)) -> (b, (a, c))
 swapTuple (a, (b, c)) = (b, (a, c))

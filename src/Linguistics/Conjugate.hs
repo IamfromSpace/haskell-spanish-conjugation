@@ -17,7 +17,7 @@ import Linguistics.Types
 import Linguistics.VerbEnding
 import Linguistics.VowelRaising
 import qualified Parser as P
-import Utils (($>), swap, withLeft)
+import Utils (($>), ifAppA, swap, withLeft)
 
 -- Has to be restricted to a string?
 class CanConjugate a where
@@ -47,50 +47,34 @@ instance CanConjugate (VerbConfig InnerSyllable', Verb) where
             willVowelRaise =
                 isVowelRaising &&
                 couldVowelRaise intermediate && not willDiphthongize
-            mIntermediate =
-                if isDiphthongBreaking
-                    then breakDiphthong intermediate
-                    else return intermediate
+            mIntermediate
+                -- Chain rules that could fail and may or may not apply
+             =
+                ifAppA breakDiphthong isDiphthongBreaking intermediate >>=
+                ifAppA diphthongize willDiphthongize >>=
+                ifAppA raiseVowel willVowelRaise >>=
+                ifAppA cToZc (isZcVerb && couldCToZc intermediate) >>=
+                ifAppA yoGo willYoGo >>=
+                ifAppA
+                    shortenedInfinitives
+                    (hasIrregularInfinitives &&
+                     couldShortenedInfinitives intermediate)
             mIntermediate' =
-                if willDiphthongize
-                    then mIntermediate >>= diphthongize
-                    else mIntermediate
-            mIntermediate'' =
-                if willVowelRaise
-                    then mIntermediate' >>= raiseVowel
-                    else mIntermediate'
-            mIntermediate''' =
-                if isZcVerb && couldCToZc intermediate
-                    then mIntermediate'' >>= cToZc
-                    else mIntermediate''
-            mIntermediate'''' =
-                if willYoGo
-                    then mIntermediate''' >>= yoGo
-                    else mIntermediate'''
-            mIntermediate''''' =
-                if hasIrregularInfinitives &&
-                   couldShortenedInfinitives intermediate
-                    then mIntermediate'''' >>= shortenedInfinitives
-                    else mIntermediate''''
-            mIntermediate'''''' =
                 case irregularPreterite <* irregularPreteriteEffect of
                     Just (shouldReplace, syllable) ->
-                        mIntermediate''''' >>=
+                        mIntermediate >>=
                         updatePenultimateSyllable shouldReplace syllable
-                    Nothing -> mIntermediate'''''
-            mIntermediate''''''' =
-                fmap
-                    (preventStressedJointDiphthongization .
-                     preventAmbiguiousJointDiphthongization)
-                    mIntermediate''''''
-            fullWord =
-                fmap
-                    (dropSemiVowelIAfterÑ .
-                     dropSemiVowelIAfterLl .
-                     dropMonosyllabicAccent .
-                     preventStartingSemiVowel . fromIntermediate)
-                    mIntermediate'''''''
-        in withLeft "could not conjugate" fullWord
+                    Nothing -> mIntermediate
+        in withLeft "could not conjugate" $
+           fmap
+               (dropSemiVowelIAfterÑ .
+                dropSemiVowelIAfterLl .
+                dropMonosyllabicAccent .
+                preventStartingSemiVowel .
+                fromIntermediate .
+                preventStressedJointDiphthongization .
+                preventAmbiguiousJointDiphthongization)
+               mIntermediate'
 
 instance CanConjugate (VerbConfig InnerSyllable', String) where
     conjugate fwv st =
