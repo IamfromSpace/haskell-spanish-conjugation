@@ -122,7 +122,8 @@ type Ending = (Core, [InnerSyllable], Maybe Coda)
 --TODO: This should mabye be a PointyList in the middle
 type Intermediate = (VerbType, Maybe Onset, [InnerSyllable'], Ending)
 
-type VerbConfig a = (Maybe (Bool, a), Bool, Bool, Bool, Bool, Bool, Bool)
+type VerbConfig b a
+     = (Maybe b, Maybe (Bool, a), Bool, Bool, Bool, Bool, Bool, Bool)
 
 type IrregularPreteriteEffect = Maybe (Maybe Ending)
 

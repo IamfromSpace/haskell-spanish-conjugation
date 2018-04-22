@@ -8,6 +8,7 @@ module Utils
     , withLeft
     , swap
     , ifAppA
+    , maybeUnit
     ) where
 
 ($>) :: Functor f => f a -> b -> f b
@@ -41,6 +42,12 @@ withLeft l m =
     case m of
         Just x -> Right x
         Nothing -> Left l
+
+maybeUnit :: Bool -> Maybe ()
+maybeUnit b =
+    if b
+        then Just ()
+        else Nothing
 
 class Swap a b c where
     swap :: a (b c) -> b (a c)
