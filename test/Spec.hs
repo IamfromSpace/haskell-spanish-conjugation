@@ -7,7 +7,6 @@ import Data.Maybe (isJust)
 import Linguistics.Conjugate
 import Linguistics.Parsers (wordOnly)
 import Linguistics.Render
-import Linguistics.Tense
 import Linguistics.Types
 import Parser
 
@@ -308,6 +307,7 @@ main =
 type VerbHelper a = a -> String
 
 -- This is not total, but that's actually perfect for our tests
+-- TODO: Allow HopelessVerb
 v :: Tense a => (VerbConfig String String, String) -> VerbHelper a
 v x tense =
     case conjugate x tense of
@@ -379,7 +379,8 @@ liar :: Tense a => VerbHelper a
 liar = v ((Nothing, Nothing, False, False, False, False, False, False), "liar")
 
 ver :: Tense a => VerbHelper a
-ver = v ((Nothing, Nothing, False, False, False, False, False, False), "ver")
+ver =
+    v ((Just "visto", Nothing, False, False, False, False, False, False), "ver")
 
 bullir :: Tense a => VerbHelper a
 bullir =

@@ -19,6 +19,7 @@ module Linguistics.Types
     , Intermediate
     , VerbConfig
     , IrregularPreteriteEffect
+    , HopelessVerb(..)
     , Subject(..)
     , SubjectlessTense(..)
     , SubjectSensativeTense(..)
@@ -126,6 +127,16 @@ type VerbConfig b a
      = (Maybe b, Maybe (Bool, a), Bool, Bool, Bool, Bool, Bool, Bool)
 
 type IrregularPreteriteEffect = Maybe (Maybe Ending)
+
+data HopelessVerb
+    = Dar
+    | Estar
+    | Haber
+    | Ir
+    | Prever
+    | Saber
+    | Ser
+    | Ver
 
 data Subject
     = Yo
