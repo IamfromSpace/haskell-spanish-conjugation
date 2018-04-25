@@ -307,8 +307,7 @@ main =
 type VerbHelper a = a -> String
 
 -- This is not total, but that's actually perfect for our tests
--- TODO: Allow HopelessVerb
-v :: Tense a => (VerbConfig String String, String) -> VerbHelper a
+v :: (Tense a, CanConjugate b) => b -> VerbHelper a
 v x tense =
     case conjugate x tense of
         Right fw -> render fw
@@ -316,145 +315,215 @@ v x tense =
 
 tocar :: Tense a => VerbHelper a
 tocar =
-    v ((Nothing, Nothing, False, False, False, False, False, False), "tocar")
+    v
+        (((Nothing, Nothing, False, False, False, False, False, False), "tocar") :: ( VerbConfig String String
+                                                                                    , String))
 
 gozar :: Tense a => VerbHelper a
 gozar =
-    v ((Nothing, Nothing, False, False, False, False, False, False), "gozar")
+    v
+        (((Nothing, Nothing, False, False, False, False, False, False), "gozar") :: ( VerbConfig String String
+                                                                                    , String))
 
 averiguar :: Tense a => VerbHelper a
 averiguar =
     v
-        ( (Nothing, Nothing, False, False, False, False, False, False)
-        , "averiguar")
+        (( (Nothing, Nothing, False, False, False, False, False, False)
+         , "averiguar") :: (VerbConfig String String, String))
 
 delinquir :: Tense a => VerbHelper a
 delinquir =
     v
-        ( (Nothing, Nothing, False, False, False, False, False, False)
-        , "delinquir")
+        (( (Nothing, Nothing, False, False, False, False, False, False)
+         , "delinquir") :: (VerbConfig String String, String))
 
 vencer :: Tense a => VerbHelper a
 vencer =
-    v ((Nothing, Nothing, False, False, False, False, False, False), "vencer")
+    v
+        ((( (Nothing, Nothing, False, False, False, False, False, False)
+          , "vencer") :: (VerbConfig String String, String)) :: ( VerbConfig String String
+                                                                , String))
 
 proteger :: Tense a => VerbHelper a
 proteger =
-    v ((Nothing, Nothing, False, False, False, False, False, False), "proteger")
+    v
+        ((( (Nothing, Nothing, False, False, False, False, False, False)
+          , "proteger") :: (VerbConfig String String, String)) :: ( VerbConfig String String
+                                                                  , String))
 
 distinguir :: Tense a => VerbHelper a
 distinguir =
     v
-        ( (Nothing, Nothing, False, False, False, False, False, False)
-        , "distinguir")
+        (( (Nothing, Nothing, False, False, False, False, False, False)
+         , "distinguir") :: (VerbConfig String String, String))
 
 construir :: Tense a => VerbHelper a
 construir =
     v
-        ( (Nothing, Nothing, False, False, False, False, False, False)
-        , "construir")
+        (( (Nothing, Nothing, False, False, False, False, False, False)
+         , "construir") :: (VerbConfig String String, String))
 
 argüir :: Tense a => VerbHelper a
 argüir =
-    v ((Nothing, Nothing, False, False, False, False, False, False), "argüir")
+    v
+        ((( (Nothing, Nothing, False, False, False, False, False, False)
+          , "argüir") :: (VerbConfig String String, String)) :: ( VerbConfig String String
+                                                                , String))
 
 hablar :: Tense a => VerbHelper a
 hablar =
-    v ((Nothing, Nothing, False, False, False, False, False, False), "hablar")
+    v
+        ((( (Nothing, Nothing, False, False, False, False, False, False)
+          , "hablar") :: (VerbConfig String String, String)) :: ( VerbConfig String String
+                                                                , String))
 
 correr :: Tense a => VerbHelper a
 correr =
-    v ((Nothing, Nothing, False, False, False, False, False, False), "correr")
+    v
+        ((( (Nothing, Nothing, False, False, False, False, False, False)
+          , "correr") :: (VerbConfig String String, String)) :: ( VerbConfig String String
+                                                                , String))
 
 caer :: Tense a => VerbHelper a
-caer = v ((Nothing, Nothing, False, True, False, False, False, False), "caer")
+caer =
+    v
+        (((Nothing, Nothing, False, True, False, False, False, False), "caer") :: ( VerbConfig String String
+                                                                                  , String))
 
 leer :: Tense a => VerbHelper a
-leer = v ((Nothing, Nothing, False, False, False, False, False, False), "leer")
+leer =
+    v
+        (((Nothing, Nothing, False, False, False, False, False, False), "leer") :: ( VerbConfig String String
+                                                                                   , String))
 
 oír :: Tense a => VerbHelper a
-oír = v ((Nothing, Nothing, False, False, False, False, False, False), "oír")
+oír =
+    v
+        (((Nothing, Nothing, False, False, False, False, False, False), "oír") :: ( VerbConfig String String
+                                                                                  , String))
 
 liar :: Tense a => VerbHelper a
-liar = v ((Nothing, Nothing, False, False, False, False, False, False), "liar")
+liar =
+    v
+        (((Nothing, Nothing, False, False, False, False, False, False), "liar") :: ( VerbConfig String String
+                                                                                   , String))
 
 ver :: Tense a => VerbHelper a
-ver =
-    v ((Just "visto", Nothing, False, False, False, False, False, False), "ver")
+ver = v Ver
 
 bullir :: Tense a => VerbHelper a
 bullir =
-    v ((Nothing, Nothing, False, False, False, False, False, False), "bullir")
+    v
+        (( (Nothing, Nothing, False, False, False, False, False, False)
+         , "bullir") :: (VerbConfig String String, String))
 
 tañer :: Tense a => VerbHelper a
 tañer =
-    v ((Nothing, Nothing, False, False, False, False, False, False), "tañer")
+    v
+        (((Nothing, Nothing, False, False, False, False, False, False), "tañer") :: ( VerbConfig String String
+                                                                                    , String))
 
 pensar :: Tense a => VerbHelper a
 pensar =
-    v ((Nothing, Nothing, False, False, False, False, True, False), "pensar")
+    v
+        (((Nothing, Nothing, False, False, False, False, True, False), "pensar") :: ( VerbConfig String String
+                                                                                    , String))
 
 contar :: Tense a => VerbHelper a
 contar =
-    v ((Nothing, Nothing, False, False, False, False, True, False), "contar")
+    v
+        (((Nothing, Nothing, False, False, False, False, True, False), "contar") :: ( VerbConfig String String
+                                                                                    , String))
 
 adquirir :: Tense a => VerbHelper a
 adquirir =
-    v ((Nothing, Nothing, False, False, False, False, True, False), "adquirir")
+    v
+        (( (Nothing, Nothing, False, False, False, False, True, False)
+         , "adquirir") :: (VerbConfig String String, String))
 
 jugar :: Tense a => VerbHelper a
-jugar = v ((Nothing, Nothing, False, False, False, False, True, False), "jugar")
+jugar =
+    v
+        (((Nothing, Nothing, False, False, False, False, True, False), "jugar") :: ( VerbConfig String String
+                                                                                   , String))
 
 oler :: Tense a => VerbHelper a
-oler = v ((Nothing, Nothing, False, False, False, False, True, False), "oler")
+oler =
+    v
+        (((Nothing, Nothing, False, False, False, False, True, False), "oler") :: ( VerbConfig String String
+                                                                                  , String))
 
 errar :: Tense a => VerbHelper a
-errar = v ((Nothing, Nothing, False, False, False, False, True, False), "errar")
+errar =
+    v
+        (((Nothing, Nothing, False, False, False, False, True, False), "errar") :: ( VerbConfig String String
+                                                                                   , String))
 
 avergonzar :: Tense a => VerbHelper a
 avergonzar =
     v
-        ( (Nothing, Nothing, False, False, False, False, True, False)
-        , "avergonzar")
+        (( (Nothing, Nothing, False, False, False, False, True, False)
+         , "avergonzar") :: (VerbConfig String String, String))
 
 pedir :: Tense a => VerbHelper a
-pedir = v ((Nothing, Nothing, False, False, False, False, False, True), "pedir")
+pedir =
+    v
+        (((Nothing, Nothing, False, False, False, False, False, True), "pedir") :: ( VerbConfig String String
+                                                                                   , String))
 
 dormir :: Tense a => VerbHelper a
 dormir =
-    v ((Nothing, Nothing, False, False, False, False, True, True), "dormir")
+    v
+        (((Nothing, Nothing, False, False, False, False, True, True), "dormir") :: ( VerbConfig String String
+                                                                                   , String))
 
 sentir :: Tense a => VerbHelper a
 sentir =
-    v ((Nothing, Nothing, False, False, False, False, True, True), "sentir")
+    v
+        (((Nothing, Nothing, False, False, False, False, True, True), "sentir") :: ( VerbConfig String String
+                                                                                   , String))
 
 enviar :: Tense a => VerbHelper a
 enviar =
-    v ((Nothing, Nothing, False, False, False, True, False, False), "enviar")
+    v
+        (((Nothing, Nothing, False, False, False, True, False, False), "enviar") :: ( VerbConfig String String
+                                                                                    , String))
 
 aislar :: Tense a => VerbHelper a
 aislar =
-    v ((Nothing, Nothing, False, False, False, True, False, False), "aislar")
+    v
+        (((Nothing, Nothing, False, False, False, True, False, False), "aislar") :: ( VerbConfig String String
+                                                                                    , String))
 
 aunar :: Tense a => VerbHelper a
-aunar = v ((Nothing, Nothing, False, False, False, True, False, False), "aunar")
+aunar =
+    v
+        (((Nothing, Nothing, False, False, False, True, False, False), "aunar") :: ( VerbConfig String String
+                                                                                   , String))
 
 descafeinar :: Tense a => VerbHelper a
 descafeinar =
     v
-        ( (Nothing, Nothing, False, False, False, True, False, False)
-        , "descafeinar")
+        (( (Nothing, Nothing, False, False, False, True, False, False)
+         , "descafeinar") :: (VerbConfig String String, String))
 
 conocer :: Tense a => VerbHelper a
 conocer =
-    v ((Nothing, Nothing, False, False, True, False, False, False), "conocer")
+    v
+        (( (Nothing, Nothing, False, False, True, False, False, False)
+         , "conocer") :: (VerbConfig String String, String))
 
 torcer :: Tense a => VerbHelper a
 torcer =
-    v ((Nothing, Nothing, False, False, False, False, True, False), "torcer")
+    v
+        (((Nothing, Nothing, False, False, False, False, True, False), "torcer") :: ( VerbConfig String String
+                                                                                    , String))
 
 asir :: Tense a => VerbHelper a
-asir = v ((Nothing, Nothing, False, True, False, False, False, False), "asir")
+asir =
+    v
+        (((Nothing, Nothing, False, True, False, False, False, False), "asir") :: ( VerbConfig String String
+                                                                                  , String))
 
 decir :: Tense a => VerbHelper a
 decir =
@@ -472,53 +541,52 @@ decir =
 tener :: Tense a => VerbHelper a
 tener =
     v
-        ( (Nothing, Just (True, "uv"), True, True, False, False, True, False)
-        , "tener")
+        (( (Nothing, Just (True, "uv"), True, True, False, False, True, False)
+         , "tener") :: (VerbConfig String String, String))
 
 salir :: Tense a => VerbHelper a
-salir = v ((Nothing, Nothing, True, True, False, False, False, False), "salir")
-
--- NOTE:  Not all rules for this verb are currently supported!
-saber :: Tense a => VerbHelper a
-saber =
+salir =
     v
-        ( (Nothing, Just (True, "up"), True, False, False, False, False, False)
-        , "saber")
+        (((Nothing, Nothing, True, True, False, False, False, False), "salir") :: ( VerbConfig String String
+                                                                                  , String))
+
+saber :: Tense a => VerbHelper a
+saber = v Saber
 
 poder :: Tense a => VerbHelper a
 poder =
     v
-        ( (Nothing, Just (True, "ud"), True, False, False, False, True, False)
-        , "poder")
+        (( (Nothing, Just (True, "ud"), True, False, False, False, True, False)
+         , "poder") :: (VerbConfig String String, String))
 
 querer :: Tense a => VerbHelper a
 querer =
     v
-        ( (Nothing, Just (True, "is"), True, False, False, False, True, False)
-        , "querer")
+        (( (Nothing, Just (True, "is"), True, False, False, False, True, False)
+         , "querer") :: (VerbConfig String String, String))
 
 hacer :: Tense a => VerbHelper a
 hacer =
     v
-        ( ( Just "hecho"
-          , Just (True, "iz")
-          , True
-          , True
-          , False
-          , False
-          , False
-          , False)
-        , "hacer")
+        (( ( Just "hecho"
+           , Just (True, "iz")
+           , True
+           , True
+           , False
+           , False
+           , False
+           , False)
+         , "hacer") :: (VerbConfig String String, String))
 
 andar :: Tense a => VerbHelper a
 andar =
     v
-        ( ( Nothing
-          , Just (False, "uv")
-          , False
-          , False
-          , False
-          , False
-          , False
-          , False)
-        , "andar")
+        (( ( Nothing
+           , Just (False, "uv")
+           , False
+           , False
+           , False
+           , False
+           , False
+           , False)
+         , "andar") :: (VerbConfig String String, String))

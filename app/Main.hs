@@ -41,11 +41,15 @@ conjugateToCardData infinitive (t, s) conjugated =
        , [infinitive, tense, subject, "simple"])
 
 conjugate' ::
-       (VerbConfig String String, String)
+       CanConjugate a
+    => a
     -> (SubjectSensativeTense, Subject)
     -> Either String CardData
-conjugate' (vc, str) st =
-    fmap (conjugateToCardData str st . render) (conjugate (vc, str) st)
+conjugate' x st =
+    liftA2
+        (`conjugateToCardData` st)
+        (fmap render (conjugate x Infinitive))
+        (fmap render (conjugate x st))
 
 allTenses :: [(SubjectSensativeTense, Subject)]
 allTenses =
@@ -61,12 +65,11 @@ allTenses =
         ]
         [Yo, Tú, Usted, Él, Nosotros, Ustedes, Ellos]
 
-configuredVerbToCardDatas ::
-       (VerbConfig String String, String) -> Either String [CardData]
+configuredVerbToCardDatas :: CanConjugate a => a -> Either String [CardData]
 configuredVerbToCardDatas stringVerb =
     swap (fmap (conjugate' stringVerb) allTenses)
 
-mkCardDatas :: [(VerbConfig String String, String)] -> Either String [CardData]
+mkCardDatas :: CanConjugate a => [a] -> Either String [CardData]
 mkCardDatas = foldr (liftA2 (++) . configuredVerbToCardDatas) (Right [])
 
 verbs :: [(VerbConfig String String, String)]
@@ -124,6 +127,9 @@ verbs =
       , "andar")
     ]
 
+hopelessVerbs :: [HopelessVerb]
+hopelessVerbs = [Dar, Estar, Haber, Ir, Prever, Saber, Ser, Ver]
+
 newDbWithCards :: String -> [CardData] -> IO ()
 newDbWithCards fileName cardDatas = do
     conn <- open fileName
@@ -135,6 +141,6 @@ newDbWithCards fileName cardDatas = do
 
 main :: IO ()
 main =
-    case mkCardDatas verbs of
+    case liftA2 (++) (mkCardDatas verbs) (mkCardDatas hopelessVerbs) of
         Left err -> error err
         Right cardDatas -> newDbWithCards "test.db" cardDatas
